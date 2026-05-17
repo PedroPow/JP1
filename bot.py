@@ -66,6 +66,9 @@ CARGOS = {
 # ADICIONE O ID DA SUA CATEGORIA PADRÃO DE TICKETS AQUI:
 CATEGORIA_TICKET_INICIAL = 1502777767610155133 
 
+CARGO_VISITANTE_ID = 1502777767610155126
+CARGO_ANALISE_ID = 1502777759863144523
+
 # RegExp para validar as plataformas permitidas
 RE_PLATAFORMAS = re.compile(r'(tiktok\.com|instagram\.com|youtube\.com|youtu\.be|kick\.com|facebook\.com)', re.IGNORECASE)
 
@@ -145,12 +148,21 @@ class FormularioSetModal(ui.Modal, title="Solicitação de Set"):
         # Como usamos o defer() lá em cima se o link passasse, aqui usamos o followup
         await interaction.followup.send(embed=embed_sucesso, view=view_redirecionamento, ephemeral=True)
 
+# --- ATRIBUIÇÃO DO CARGO "EM ANÁLISE" ---
+        cargo_analise = guild.get_role(CARGO_ANALISE_ID)
+        if cargo_analise:
+            try:
+                await interaction.user.add_roles(cargo_analise)
+                print(f"Cargo Em Análise aplicado para {interaction.user.name}.")
+            except discord.Forbidden:
+                print("Bot sem permissão para aplicar o cargo Em Análise.")        
+
 # Botão Inicial do Canal de Avisos
 class BotaoSolicitarSet(ui.View):
     def __init__(self):
         super().__init__(timeout=None)
 
-    @ui.button(label="Solicitar Set", style=discord.ButtonStyle.gray, emoji="<:emojiJP:1505074670829961236>", custom_id="btn_solicitar_set")
+    @ui.button(label="Abrir Cadastro", style=discord.ButtonStyle.gray, emoji="<:emojiJP:1505074670829961236>", custom_id="btn_solicitar_set")
     async def solicitar_set(self, interaction: discord.Interaction, button: ui.Button):
         await interaction.response.send_modal(FormularioSetModal())
 
@@ -237,27 +249,35 @@ class SelectNiveis(ui.Select):
 
                     membro = None
 
-               
-
                 if membro:
-
-                    # 1. Entrega dos Cargos
-
+                    # 1. Entrega dos Cargos do Set
                     ids_cargos = CARGOS.get(nivel, [])
-
                     cargos_para_adicionar = [guild.get_role(c_id) for c_id in ids_cargos if guild.get_role(c_id)]
-
-                   
-
+                    
                     if cargos_para_adicionar:
-
                         try:
-
                             await membro.add_roles(*cargos_para_adicionar)
-
                         except discord.Forbidden:
+                            print("Bot sem permissão para aplicar os cargos do Set.")
 
-                            print("Bot sem permissão para aplicar os cargos.")
+                    # --- NOVO: REMOÇÃO DOS CARGOS DE VISITANTE E ANÁLISE ---
+                    cargos_para_remover = []
+                    
+                    cargo_visitante = guild.get_role(CARGO_VISITANTE_ID)
+                    cargo_analise = guild.get_role(CARGO_ANALISE_ID)
+                    
+                    if cargo_visitante and cargo_visitante in membro.roles:
+                        cargos_para_remover.append(cargo_visitante)
+                        
+                    if cargo_analise and cargo_analise in membro.roles:
+                        cargos_para_remover.append(cargo_analise)
+                        
+                    if cargos_para_remover:
+                        try:
+                            await membro.remove_roles(*cargos_para_remover)
+                            print(f"Cargos antigos (Visitante/Análise) removidos de {membro.name}.")
+                        except discord.Forbidden:
+                            print(f"Bot sem permissão para remover cargos antigos de {membro.name}.")
 
 
 
@@ -477,6 +497,19 @@ async def on_ready():
     bot.add_view(MenuGerenciamentoTicket())
     
     print("📌 Todas as Views Persistentes foram carregadas com sucesso!")
+
+async def on_member_join(self, member: discord.Member):
+        guild = member.guild
+        cargo_visitante = guild.get_role(CARGO_VISITANTE_ID)
+        
+        if cargo_visitante:
+            try:
+                await member.add_roles(cargo_visitante)
+                print(f"Cargo Visitante aplicado automaticamente para {member.name}.")
+            except discord.Forbidden:
+                print(f"Bot sem permissão para dar cargo de Visitante para {member.name}.")
+        else:
+            print("Cargo Visitante não encontrado. Verifique o ID configurado.")    
 
 @bot.command()
 @commands.has_permissions(administrator=True)
