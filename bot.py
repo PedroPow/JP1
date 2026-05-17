@@ -159,7 +159,7 @@ class SelectNiveis(ui.Select):
         ]
         super().__init__(placeholder="⚙️・Gerenciar nível", min_values=1, max_values=1, options=options)
 
-    async def callback(self, interaction: discord.Interaction):
+async def callback(self, interaction: discord.Interaction):
             await interaction.response.defer()
             
             nivel = self.values[0]
@@ -172,12 +172,12 @@ class SelectNiveis(ui.Select):
             nome_modal = self.nome_usuario
             id_modal = ""
 
-            # Varre os campos do embed para resgatar o Nome e ID exatos digitados no modal
+            # CORREÇÃO 1: Ajustado para procurar os títulos exatos que seu Modal gera
             for field in embed.fields:
-                if field.name == "Nome Fornecido":
-                    nome_modal = field.value
-                elif field.name == "ID do Discord":
-                    id_modal = field.value
+                if "Nome Completo:" in field.name:
+                    nome_modal = field.value.replace("`", "")  # Remove as crases ` se houver
+                elif "Identificação (ID):" in field.name:
+                    id_modal = field.value.replace("`", "")    # Remove as crases ` se houver
 
             # --- SISTEMA DE ENTREGA DE CARGOS E ALTERAÇÃO DE APELIDO ---
             import re
@@ -201,11 +201,20 @@ class SelectNiveis(ui.Select):
                         except discord.Forbidden:
                             print("Bot sem permissão para aplicar os cargos.")
 
-                    # 2. MUDANÇA DE APELIDO (NICKNAME) DO PLAYER
-                    novo_apelido = f"{EMOJIS[nivel]} | {nome_modal} - {id_modal}"
+                    # 2. MUDANÇA DE APELIDO INTELEGENTE (CORREÇÃO 2)
+                    emoji = EMOJIS.get(nivel, "")
                     
-                    if len(novo_apelido) > 32:
-                        novo_apelido = novo_apelido[:31] + "…"
+                    # Caracteres fixos consumidos por: "EMOJI |  - ID"
+                    # " | " (3 chars) e " - " (3 chars) = 6 caracteres fixos
+                    caracteres_fixos = len(emoji) + len(id_modal) + 6
+                    espaco_disponivel_nome = 32 - caracteres_fixos
+
+                    # Se o nome do usuário for muito grande, corta apenas o nome!
+                    if len(nome_modal) > espaco_disponivel_nome:
+                        nome_modal = nome_modal[:(espaco_disponivel_nome - 1)].strip() + "…"
+
+                    # Monta o apelido garantindo que o ID estará visível e no final
+                    novo_apelido = f"{emoji} | {nome_modal} - {id_modal}"
 
                     try:
                         await membro.edit(nick=novo_apelido)
