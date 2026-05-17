@@ -77,7 +77,7 @@ RE_PLATAFORMAS = re.compile(r'(tiktok\.com|instagram\.com|youtube\.com|youtu\.be
 # Modal de Solicitação
 class FormularioSetModal(ui.Modal, title="Solicitação de Set"):
     # 1. Primeiro declaramos apenas os campos de entrada de texto do formulário
-    nome_usuario = ui.TextInput(label="Nome Completo", placeholder="Ex: pow-ehrmantraut", min_length=5, max_length=50)
+    nome_usuario = ui.TextInput(label="Nome Completo", placeholder="Ex: pow-ehrmantraut", min_length=5, max_length=20)
     discord_id = ui.TextInput(label="Identificação (ID)", placeholder="Ex: 37", min_length=1, max_length=300)
     link_plataforma = ui.TextInput(label="Link da Plataforma", placeholder="Ex: twitch.tv/... ou youtube.com/...")
     observacao = ui.TextInput(label="Observação (Opcional)", style=discord.TextStyle.paragraph, required=False, max_length=300)
@@ -117,7 +117,7 @@ class FormularioSetModal(ui.Modal, title="Solicitação de Set"):
 
         # Montar o Embed com os dados do Modal
         embed = discord.Embed(title="<:emojiJP:1505074670829961236> Contrato Recebido", color=discord.Color.red())
-        embed.description = f"Usuário do Discord: {interaction.user.mention}\nUse o menu abaixo para gerenciar esta solicitação."
+        embed.description = f"Membro: **{interaction.user.mention}**\n"
         embed.add_field(name="Nome Completo:", value=f"`{self.nome_usuario.value}`", inline=True)
         embed.add_field(name="Identificação (ID):", value=f"`{self.discord_id.value}`", inline=True)
         embed.add_field(name="Link da Plataforma:", value=f"{self.link_plataforma.value}", inline=False)
@@ -128,7 +128,7 @@ class FormularioSetModal(ui.Modal, title="Solicitação de Set"):
         embed.set_footer(text="Jardim Peri RP - Todos os direitos reservados", icon_url="https://cdn.discordapp.com/attachments/1444735189765849320/1505074583601025114/emoji_JP.webp?ex=6a094d6f&is=6a07fbef&hm=5bd4e53ca8c4b641133b0f855affa243f440b86cdb33410d7579215042d8eba3&")
 
         # Enviar embed no canal recém-criado junto com o menu de ações administrativo
-        await ticket_channel.send(embed=embed, view=MenuGerenciamentoTicket(self.nome_usuario.value))
+        await ticket_channel.send(embed=embed, view=MenuGerenciamentoTicket(self.nome_usuario.value))   
         
         # --- EMBED E BOTÃO DE REDIRECIONAMENTO ---
         embed_sucesso = discord.Embed(
