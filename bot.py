@@ -18,14 +18,21 @@ TOKEN = os.getenv("TOKEN_JP")  # Certifique-se de definir a variável de ambient
 
 # --- CONFIGURAÇÕES FORNECIDAS ---
 BENEFICIOS = {
-    "bronze": ["• 18 Gemas ( Todo dia 1 - Solicitar no Ticket Streamer )", "• $18.000 em dinheiro", "• Direito à aquisição de 01 (um) veículo, desde que disponível para compra com moeda do jogo, com valor máximo de até $175.000"],
-    "prata": ["• 25 Gemas ( Todo dia 1 - Solicitar no Ticket Streamer )", "• $18.000 em dinheiro", "• Acesso ao comando /cam", "• Acesso ao comando /som", "• Direito à aquisição de 01 (um) veículo, desde que disponível para compra com moeda do jogo, com valor máximo de até $350.000"],
-    "ouro": ["• 32 Gemas ( Todo dia 1 - Solicitar no Ticket Streamer )", "• $25.000 em dinheiro", "• Acesso ao comando /cam", "• Acesso ao comando /som", "• Acesso ao comando /remap", "• Direito à aquisição de 01 (um) veículo, desde que disponível para compra com moeda do jogo, com valor máximo de até $525.000"],
-    "platina": ["• 39 Gemas ( Todo dia 1 - Solicitar no Ticket Streamer )", "• $32.000 em dinheiro", "• Acesso ao comando /cam", "• Acesso ao comando /som", "• Acesso ao comando /remap", "• Verificação oficial no Instagram", "• Direito à aquisição de 01 (um) veículo disponível na concessionária"],
-    "esmeralda": ["• 46 Gemas ( Todo dia 1 - Solicitar no Ticket Streamer )", "• $39.000 em dinheiro", "• Acesso ao comando /cam", "• Acesso ao comando /som", "• Acesso ao comando /remap", "• Acesso ao /barber", "• Verificação oficial no Instagram", "• Direito à aquisição de 01 (um) veículo disponível na concessionária"],
-    "ruby": ["• 53 Gemas ( Todo dia 1 - Solicitar no Ticket Streamer )", "• $46.000 em dinheiro", "• Acesso ao comando /cam", "• Acesso ao comando /som", "• Acesso ao comando /remap", "• Verificação oficial no Instagram", "• Direito à aquisição de 02 (dois) veículos disponíveis na concessionária", "• Direito a 01 (um) item de até $35 na loja do servidor", "• Acesso ao /barber", "• Acesso à /skin shop"],
-    "diamante": ["• 60 Gemas ( Todo dia 1 - Solicitar no Ticket Streamer )", "• $46.000 em dinheiro", "• Acesso ao comando /cam", "• Acesso ao comando /som", "• Acesso ao comando /remap", "• Verificação oficial no Instagram", "• Direito à aquisição de 02 (três) veículos disponíveis na concessionária", "• Direito a 01 (um) item de até $53 na loja do servidor", "• Acesso ao /barber", "• Acesso à /skin shop"],
-    "oficial": ["• 67 Gemas ( Todo dia 1 - Solicitar no Ticket Streamer )", "• $46.000 em dinheiro", "• Acesso ao comando /cam", "• Acesso ao comando /som", "• Acesso ao comando /remap", "• Verificação oficial no Instagram", "• Direito à aquisição de 02 (quatro) veículos disponíveis na concessionária", "• Direito a 01 (um) item de até $70 na loja do servidor", "• Acesso ao /barber", "• Acesso à /skin shop", "• Redução do tempo de morte", "• Acesso ao drone"]
+    "bronze": ["• HONDA CB 2020 OU NISSAN VERSA", "• $20.000 EM DINHEIRO", "• TAG EXCLUSIVA STREAMER BRONZE", "• /SOM POR 30 DIAS"],
+
+    "prata": ["• VW GOLF OU HONDA XRE", "• $45.000 EM DINHEIRO", "• TAG EXCLUSIVA STREAMER PRATA", "• SALÁRIO STREAMER DE 3.500 A CADA 30 MINUTOS", "• /CAM POR 30 DIAS", "• /SOM POR 30 DIAS"],
+
+    "ouro": ["• CHEVROLET SPIN + HONDA CB 2020", "• $60.000 EM DINHEIRO", "• TAG EXCLUSIVA STREAMER OURO", "• SALÁRIO STREAMER DE 4.500 A CADA 30 MINUTOS", "• /CAM POR 30 DIAS", "• /SOM POR 30 DIAS"],
+
+    "platina": ["• CHEVROLET SPIN + VW GOLF  + HONDA XRE", "• $80.000 EM DINHEIRO", "• TAG EXCLUSIVA STREAMER PLATINA", "• SALÁRIO STREAMER DE 5.500 A CADA 30 MINUTOS", "• /CAM POR 30 DIAS", "• /SOM POR 30 DIAS"],
+
+    "esmeralda": ["• BMW M4 + FIAT PALIO + HONDA XRE", "• $100.000 EM DINHEIRO", "• TAG EXCLUSIVA STREAMER ESMERALDA", "• SALÁRIO STREAMER DE 6.500 A CADA 30 MINUTOS", "• /CAM POR 30 DIAS", "• /SOM POR 30 DIAS", "• /BARBEARIA"],
+
+    "ruby": ["• SKINSHOP PRÓPRIA", "• 3 VEÍCULOS PERMANENTES DA CONCESSIONÁRIA", "• $130.000 EM DINHEIRO", "• TAG EXCLUSIVA STREAMER RUBY", "• SALÁRIO STREAMER DE 8.500 A CADA 30 MINUTOS", "• /BARBEARIA", "• /CAM POR 30 DIAS", "• /SOM POR 30 DIAS"],
+
+    "diamante": ["• SKINSHOP PRÓPRIA", "• 3 VEÍCULOS PERMANENTES DA CONCESSIONÁRIA", "• $160.000 EM DINHEIRO", "• TAG EXCLUSIVA STREAMER RUBY", "• SALÁRIO STREAMER DE 10.000 A CADA 30 MINUTOS", "• /BARBEARIA", "• /CAM POR 30 DIAS", "• /SOM POR 30 DIAS"],
+
+    "oficial": ["• UM PLANO TOTALMENTE EXCLUSIVO, CRIADO SOB MEDIDA DE ACORDO COM SUAS MÉTRICAS, ALCANCE E DESEMPENHO DENTRO DA CIDADE. INCLUINDO BENEFÍCIOS PERSONALIZADOS, VANTAGENS ÚNICAS E RECONHECIMENTO DENTRO DA CIDADE."],
 }
 
 CATEGORIAS = {
