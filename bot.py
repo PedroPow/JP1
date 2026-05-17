@@ -1,7 +1,11 @@
 import discord
+from discord import app_commands
 from discord.ext import commands
-from discord import ui
+import os  # <-- CERTIFIQUE-SE DE QUE ESTA LINHA ESTÁ AQUI
 import re
+from dotenv import load_dotenv
+
+load_dotenv()
 
 # Configurações de Intenções
 intents = discord.Intents.default()
