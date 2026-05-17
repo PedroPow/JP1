@@ -66,17 +66,28 @@ RE_PLATAFORMAS = re.compile(r'(tiktok\.com|instagram\.com|youtube\.com|youtu\.be
 
 # Modal de Solicitação
 class FormularioSetModal(ui.Modal, title="Solicitação de Set"):
+    # 1. Primeiro declaramos apenas os campos de entrada de texto do formulário
     nome_usuario = ui.TextInput(label="Nome Completo", placeholder="Ex: pow-ehrmantraut", min_length=5, max_length=50)
     discord_id = ui.TextInput(label="Identificação (ID)", placeholder="Ex: 37", min_length=1, max_length=300)
     link_plataforma = ui.TextInput(label="Link da Plataforma", placeholder="Ex: twitch.tv/... ou youtube.com/...")
-
-    if not RE_PLATAFORMAS.search(link_val):
-        embed_erro = discord.Embed(description="⚠️ Link inválido! Use apenas links de plataformas permitidas.", color=0xFF0000)
-        return await interaction.response.send_message(embed=embed_erro, ephemeral=True)
-
     observacao = ui.TextInput(label="Observação (Opcional)", style=discord.TextStyle.paragraph, required=False, max_length=300)
 
+    # 2. Toda a lógica de processamento e validação acontece obrigatoriamente dentro do on_submit
     async def on_submit(self, interaction: discord.Interaction):
+        
+        # --- VALIDAÇÃO DO LINK (CORRIGIDO) ---
+        # Pegamos o valor digitado no campo 'link_plataforma' usando '.value'
+        link_digitado = self.link_plataforma.value
+        
+        if not RE_PLATAFORMAS.search(link_digitado):
+            embed_erro = discord.Embed(
+                description="⚠️ Link inválido! Use apenas links de plataformas permitidas (TikTok, Instagram, YouTube, Kick, Facebook).", 
+                color=0xFF0000
+            )
+            # Como ainda não demos defer(), respondemos direto com send_message
+            return await interaction.response.send_message(embed=embed_erro, ephemeral=True)
+
+        # Se passou na validação do link, o código continua normalmente:
         await interaction.response.defer(ephemeral=True)
         guild = interaction.guild
         
@@ -90,7 +101,7 @@ class FormularioSetModal(ui.Modal, title="Solicitação de Set"):
             reason=f"Ticket de Set aberto por {interaction.user.name}"
         )
         
-        # Setar permissões básicas do ticket (Modifique conforme necessário)
+        # Setar permissões básicas do ticket
         await ticket_channel.set_permissions(guild.default_role, read_messages=False)
         await ticket_channel.set_permissions(interaction.user, read_messages=True, send_messages=True)
 
@@ -100,26 +111,22 @@ class FormularioSetModal(ui.Modal, title="Solicitação de Set"):
         embed.add_field(name="Nome Completo:", value=f"`{self.nome_usuario.value}`", inline=True)
         embed.add_field(name="Identificação (ID):", value=f"`{self.discord_id.value}`", inline=True)
         embed.add_field(name="Link da Plataforma:", value=f"{self.link_plataforma.value}", inline=False)
-        embed.add_field(name="Observação:", value=f"`{self.observacao.value}`\n\n" or "`Nenhuma observação informada.`\n\n", inline=False)
+        embed.add_field(name="Observação:", value=f"`{self.observacao.value}`" if self.observacao.value else "`Nenhuma observação informada.`", inline=False)
         
         embed.set_thumbnail(url="https://cdn.discordapp.com/attachments/1444735189765849320/1503019230910746654/GIF_PERI.gif?ex=6a086abd&is=6a07193d&hm=93a51adb8b2d2e5b297285cf62c3cac8f17a1d21743f59b960909cfd5a058ae8&")
-
         embed.set_image(url="https://cdn.discordapp.com/attachments/1444735189765849320/1505098549610811462/Criadores_JP_2.png?ex=6a0963c1&is=6a081241&hm=90f76b910373b79f86e88661838d21101075da0480590fb1d7df5a5eaa69fdd1&")
-
         embed.set_footer(text="Jardim Peri RP - Todos os direitos reservados", icon_url="https://cdn.discordapp.com/attachments/1444735189765849320/1505074583601025114/emoji_JP.webp?ex=6a094d6f&is=6a07fbef&hm=5bd4e53ca8c4b641133b0f855affa243f440b86cdb33410d7579215042d8eba3&")
 
-# Enviar embed no canal recém-criado junto com o menu de ações administrativo
+        # Enviar embed no canal recém-criado junto com o menu de ações administrativo
         await ticket_channel.send(embed=embed, view=MenuGerenciamentoTicket(self.nome_usuario.value))
         
-        # --- NOVO: EMBED E BOTÃO DE REDIRECIONAMENTO ---
-        # Criamos o Embed de confirmação para o usuário
+        # --- EMBED E BOTÃO DE REDIRECIONAMENTO ---
         embed_sucesso = discord.Embed(
             title="🎫 Ticket Criado com Sucesso!",
             description=f"Seu formulário foi enviado. Clique no botão abaixo para ir direto ao seu ticket de atendimento.",
             color=discord.Color.red()
         )
         
-        # Criamos uma View temporária apenas para segurar o botão de link direto
         view_redirecionamento = ui.View()
         view_redirecionamento.add_item(ui.Button(
             label="Ir para o Ticket", 
@@ -128,9 +135,9 @@ class FormularioSetModal(ui.Modal, title="Solicitação de Set"):
             emoji="<:emojiJP:1505074670829961236>"
         ))
         
-        # Envia a resposta efêmera (visível apenas para o usuário) com o embed e o botão
+        # Como usamos o defer() lá em cima se o link passasse, aqui usamos o followup
         await interaction.followup.send(embed=embed_sucesso, view=view_redirecionamento, ephemeral=True)
-
+        
 # Botão Inicial do Canal de Avisos
 class BotaoSolicitarSet(ui.View):
     def __init__(self):
