@@ -263,7 +263,7 @@ class SelectNiveis(ui.Select):
 
                     # 2. MUDANÇA DE APELIDO (NICKNAME) DO PLAYER
 
-                    novo_apelido = f"{EMOJIS[nivel]} | {nome_modal} - {id_modal}"
+                    novo_apelido = f"{EMOJIS[nivel]} | {nome_modal}"
 
                    
 
