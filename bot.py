@@ -483,8 +483,8 @@ async def on_ready():
 async def JP1(ctx):  # <--- Corrigido aqui!
     """Comando para enviar o painel com o botão de Solicitar Set"""
     embed = discord.Embed(
-        title="<:emojiJP:1505074670829961236> Jardim Peri - Solicitação de Contrato",
-        description="> Seja bem-vindo ao painel de solicitação de contrato! Para solicitar um set.\n\n" "> clique no botão abaixo e preencha o formulário com suas informações.\n\n" "> Nossa equipe irá analisar sua solicitação e entrar em contato o mais breve possível.\n\n" "> Obrigado por escolher o Jardim Peri!\n\n"
+        title="<:emojiJP:1505074670829961236> Jardim Peri - **CADASTRO DE STREAMERS**",
+        description="> Seja bem-vindo ao painel de **CADASTRO DE STREAMERS**!\n\n" "> clique no botão abaixo e preencha o formulário com suas informações.\n\n" "> Nossa equipe irá analisar sua solicitação e entrar em contato o mais breve possível.\n\n" "> Obrigado por escolher o Jardim Peri!\n\n"
         "**Tenha em mãos as seguintes informações para agilizar sua solicitação:**\n\n"
         "🔸`Nome Completo`\n"
         "🔸`Identificação (ID)`\n"
