@@ -137,7 +137,7 @@ class FormularioSetModal(ui.Modal, title="Solicitação de Set"):
         
         # Como usamos o defer() lá em cima se o link passasse, aqui usamos o followup
         await interaction.followup.send(embed=embed_sucesso, view=view_redirecionamento, ephemeral=True)
-        
+
 # Botão Inicial do Canal de Avisos
 class BotaoSolicitarSet(ui.View):
     def __init__(self):
@@ -277,12 +277,12 @@ class SelectAcoes(ui.Select):
             tem_cargo = any(role.id == CARGO_STAFF_ID for role in interaction.user.roles)
             
             if not tem_cargo:
-                        embed_negado = discord.Embed(
-                            title="🔒 Acesso Negado",
-                            description="Apenas membros da Staff autorizados podem gerenciar este ticket.",
-                            color=discord.Color.red()
-                        )
-                        return await interaction.response.send_message(embed=embed_negado, ephemeral=True)
+                embed_negado = discord.Embed(
+                    title="🔒 Acesso Negado",
+                    description="Apenas membros da Staff autorizados podem gerenciar este ticket.\n Cargo necessário: <@&1502777759880188125>",
+                    color=discord.Color.red()
+                )
+                return await interaction.response.send_message(embed=embed_negado, ephemeral=True)
             
             # Caso tenha o cargo, o fluxo continua normalmente abaixo:
             acao = self.values[0]
