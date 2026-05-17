@@ -156,121 +156,218 @@ class BotaoSolicitarSet(ui.View):
 
 # Select Menu com os Níveis (Aceitar / Promover)
 class SelectNiveis(ui.Select):
+
     def __init__(self, nome_usuario, acao):
+
         self.nome_usuario = nome_usuario
+
         self.acao = acao # Guarda se a ação atual é "aceitar" ou "promover"
-        
+
+       
+
         options = [
+
             discord.SelectOption(label=nivel.capitalize(), value=nivel, emoji=EMOJIS[nivel])
+
             for nivel in BENEFICIOS.keys()
+
         ]
+
         super().__init__(placeholder="⚙️・Gerenciar nível", min_values=1, max_values=1, options=options)
 
-async def callback(self, interaction: discord.Interaction):
+
+
+    async def callback(self, interaction: discord.Interaction):
+
             await interaction.response.defer()
-            
+
+           
+
             nivel = self.values[0]
+
             guild = interaction.guild
+
             channel = interaction.channel
+
             mensagem = interaction.message
+
             embed = mensagem.embeds[0]
 
+
+
             # --- CAPTURA DE INFORMAÇÕES DO EMBED PARA O APELIDO ---
+
             nome_modal = self.nome_usuario
+
             id_modal = ""
 
-            # CORREÇÃO 1: Ajustado para procurar os títulos exatos que seu Modal gera
+
+
+            # Varre os campos do embed para resgatar o Nome e ID exatos digitados no modal
+
             for field in embed.fields:
-                if "Nome Completo:" in field.name:
-                    nome_modal = field.value.replace("`", "")  # Remove as crases ` se houver
-                elif "Identificação (ID):" in field.name:
-                    id_modal = field.value.replace("`", "")    # Remove as crases ` se houver
+
+                if field.name == "Nome Fornecido":
+
+                    nome_modal = field.value
+
+                elif field.name == "ID do Discord":
+
+                    id_modal = field.value
+
+
 
             # --- SISTEMA DE ENTREGA DE CARGOS E ALTERAÇÃO DE APELIDO ---
+
             import re
+
             match = re.search(r"<@!?(\d+)>", embed.description)
-            
+
+           
+
             if match:
+
                 membro_id = int(match.group(1))
+
                 try:
+
                     membro = guild.get_member(membro_id) or await guild.fetch_member(membro_id)
+
                 except Exception:
+
                     membro = None
-                
+
+               
+
                 if membro:
+
                     # 1. Entrega dos Cargos
+
                     ids_cargos = CARGOS.get(nivel, [])
+
                     cargos_para_adicionar = [guild.get_role(c_id) for c_id in ids_cargos if guild.get_role(c_id)]
-                    
+
+                   
+
                     if cargos_para_adicionar:
+
                         try:
+
                             await membro.add_roles(*cargos_para_adicionar)
+
                         except discord.Forbidden:
+
                             print("Bot sem permissão para aplicar os cargos.")
 
-                    # 2. MUDANÇA DE APELIDO INTELEGENTE (CORREÇÃO 2)
-                    emoji = EMOJIS.get(nivel, "")
-                    
-                    # Caracteres fixos consumidos por: "EMOJI |  - ID"
-                    # " | " (3 chars) e " - " (3 chars) = 6 caracteres fixos
-                    caracteres_fixos = len(emoji) + len(id_modal) + 6
-                    espaco_disponivel_nome = 32 - caracteres_fixos
 
-                    # Se o nome do usuário for muito grande, corta apenas o nome!
-                    if len(nome_modal) > espaco_disponivel_nome:
-                        nome_modal = nome_modal[:(espaco_disponivel_nome - 1)].strip() + "…"
 
-                    # Monta o apelido garantindo que o ID estará visível e no final
-                    novo_apelido = f"{emoji} | {nome_modal} - {id_modal}"
+                    # 2. MUDANÇA DE APELIDO (NICKNAME) DO PLAYER
+
+                    novo_apelido = f"{EMOJIS[nivel]} | {nome_modal} - {id_modal}"
+
+                   
+
+                    if len(novo_apelido) > 32:
+
+                        novo_apelido = novo_apelido[:31] + "…"
+
+
 
                     try:
+
                         await membro.edit(nick=novo_apelido)
+
                     except discord.Forbidden:
+
                         print(f"Bot sem permissão para alterar o apelido de {membro.name}.")
+
                 else:
+
                     print("Dono do ticket não encontrado para receber os cargos/apelido.")
 
+
+
             # --- ATUALIZAÇÃO DO CANAL DO TICKET ---
+
             # 3. Mantém o canal atualizado também se quiser mover de categoria
+
             novo_nome_canal = f"{EMOJIS[nivel]}・{nome_modal.lower()}"
+
             await channel.edit(name=novo_nome_canal)
 
+
+
             id_categoria = CATEGORIAS.get(nivel)
+
             if id_categoria:
+
                 nova_categoria = guild.get_channel(id_categoria)
+
                 if nova_categoria:
+
                     await channel.edit(category=nova_categoria)
 
+
+
             # 4. Atualizar o Embed do Canal com os Benefícios
+
             for i, field in enumerate(embed.fields):
+
                 if field.name.startswith("🎁 Benefícios"):
+
                     embed.remove_field(i)
+
                     break
 
+
+
             texto_beneficios = "\n".join(BENEFICIOS[nivel])
+
             embed.add_field(name=f"🎁 Benefícios - Nível {nivel.capitalize()}", value=texto_beneficios, inline=False)
+
             embed.color = discord.Color.red()
 
+
+
             # Faz apenas UMA edição limpa apagando o texto de instruções antigo
+
             await mensagem.edit(content=None, embed=embed, view=MenuGerenciamentoTicket(self.nome_usuario))
 
+
+
             # --- ENVIAR EMBED NA DM DO PLAYER (ACEITO / PROMOVIDO) ---
+
             if match and membro:
+
                 embed_dm = discord.Embed(
+
                     title="<:emojiJP:1505074670829961236> Atualização no seu Set de Streamer!",
+
                     description=f"Olá {membro.mention}, seu set no servidor foi atualizado com sucesso!",
+
                     color=discord.Color.red()
+
                 )
+
                 embed_dm.add_field(name="Novo Status:", value=f"**`{nivel.capitalize()}` `{EMOJIS[nivel]}`**.", inline=False)
+
                 embed_dm.add_field(name="🎁 Benefícios Liberados:", value=texto_beneficios, inline=False)
 
+
+
                 embed_dm.set_thumbnail(url="https://cdn.discordapp.com/attachments/1444735189765849320/1503019230910746654/GIF_PERI.gif?ex=6a086abd&is=6a07193d&hm=93a51adb8b2d2e5b297285cf62c3cac8f17a1d21743f59b960909cfd5a058ae8&")
+
                 embed_dm.set_footer(text="Parabéns e boa sorte com o seu conteúdo!", icon_url="https://cdn.discordapp.com/attachments/1444735189765849320/1505074583601025114/emoji_JP.webp?ex=6a094d6f&is=6a07fbef&hm=5bd4e53ca8c4b641133b0f855affa243f440b86cdb33410d7579215042d8eba3&")
-                
+
+               
+
                 try:
+
                     await membro.send(embed=embed_dm)
+
                 except discord.Forbidden:
-                    print(f"Não foi possível enviar DM para {membro.name} pois a DM dele está fechada.")            
+
+                    print(f"Não foi possível enviar DM para {membro.name} pois a DM dele está fechada.")           
 
 
 # Select Menu Principal (Aceitar, Recusar, Promover)
