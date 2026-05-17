@@ -59,6 +59,9 @@ CARGOS = {
 # ADICIONE O ID DA SUA CATEGORIA PADRÃO DE TICKETS AQUI:
 CATEGORIA_TICKET_INICIAL = 1502777767610155133 
 
+# RegExp para validar as plataformas permitidas
+RE_PLATAFORMAS = re.compile(r'(tiktok\.com|instagram\.com|youtube\.com|youtu\.be|kick\.com|facebook\.com)', re.IGNORECASE)
+
 # --- INTERFACES DO USUÁRIO (UI) ---
 
 # Modal de Solicitação
@@ -66,6 +69,11 @@ class FormularioSetModal(ui.Modal, title="Solicitação de Set"):
     nome_usuario = ui.TextInput(label="Nome Completo", placeholder="Ex: pow-ehrmantraut", min_length=5, max_length=50)
     discord_id = ui.TextInput(label="Identificação (ID)", placeholder="Ex: 37", min_length=1, max_length=300)
     link_plataforma = ui.TextInput(label="Link da Plataforma", placeholder="Ex: twitch.tv/... ou youtube.com/...")
+
+    if not RE_PLATAFORMAS.search(link_val):
+        embed_erro = discord.Embed(description="⚠️ Link inválido! Use apenas links de plataformas permitidas.", color=0xFF0000)
+        return await interaction.response.send_message(embed=embed_erro, ephemeral=True)
+
     observacao = ui.TextInput(label="Observação (Opcional)", style=discord.TextStyle.paragraph, required=False, max_length=300)
 
     async def on_submit(self, interaction: discord.Interaction):
