@@ -70,7 +70,7 @@ CARGO_VISITANTE_ID = 1502777767610155126
 CARGO_ANALISE_ID = 1502777759863144523
 
 # RegExp para validar as plataformas permitidas
-RE_PLATAFORMAS = re.compile(r'(tiktok\.com|instagram\.com|youtube\.com|youtu\.be|kick\.com|facebook\.com)', re.IGNORECASE)
+RE_PLATAFORMAS = re.compile(r'(tiktok\.com|instagram\.com|youtube\.com|youtu\.be|kick\.com|facebook\.com|kwai)', re.IGNORECASE)
 
 # --- INTERFACES DO USUÁRIO (UI) ---
 
