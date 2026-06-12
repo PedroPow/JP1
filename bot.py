@@ -383,12 +383,69 @@ async def ban(interaction: discord.Interaction, membro: discord.Member, motivo: 
     await interaction.response.send_message(f"⛔ {membro.mention} banido!", ephemeral=True)
     await enviar_log(interaction.guild, "ban", "⛔ MEMBRO BANIDO", f"\nStaff:\n{interaction.user.mention}\n\nBanido:\n{membro.mention}\n\nID:\n`{membro.id}`\n\nMotivo:\n{motivo}\n", discord.Color.red())
 
-class MensagemModal(Modal, title="Enviar Mensagem"):
-    texto = TextInput(label="Mensagem", style=discord.TextStyle.paragraph, max_length=2000)
+class MensagemModal(Modal, title="📢 Enviar Mensagem"):
+    conteudo = TextInput(
+        label="Conteúdo da mensagem", 
+        style=discord.TextStyle.paragraph, 
+        required=True, 
+        max_length=2000
+    )
+
     async def on_submit(self, interaction: discord.Interaction):
-        await interaction.channel.send(self.texto.value)
-        await interaction.response.send_message("✅ Mensagem enviada!", ephemeral=True)
-        await enviar_log(interaction.guild, "mensagem", "📢 MENSAGEM ENVIADA", f"\nStaff:\n{interaction.user.mention}\n\nCanal:\n{interaction.channel.mention}\n\nMensagem:\n\n{self.texto.value}\n", discord.Color.blue())
+        # Checar autorização (Administrador)
+        if not interaction.user.guild_permissions.administrator:
+            return await interaction.response.send_message("❌ Você não tem permissão para usar este modal.", ephemeral=True)
+        
+        await interaction.response.send_message("⏳ Enviando...", ephemeral=True)
+        
+        try:
+            msg_inicial = await interaction.channel.send(self.conteudo.value)
+        except Exception:
+            return await interaction.followup.send("❌ Não consegui enviar a mensagem inicial (permissão).", ephemeral=True)
+            
+        await interaction.followup.send("📎 Responda aquela mensagem com anexos em até 5 minutos.", ephemeral=True)
+
+        def check(m: discord.Message):
+            return (
+                m.reference and 
+                m.reference.message_id == msg_inicial.id and 
+                m.author == interaction.user and 
+                m.channel == interaction.channel
+            )
+
+        try:
+            reply = await bot.wait_for("message", timeout=300.0, check=check)
+            files = []
+            
+            async with aiohttp.ClientSession() as session:
+                for a in reply.attachments:
+                    try:
+                        async with session.get(a.url) as resp:
+                            dados = await resp.read()
+                            files.append(discord.File(io.BytesIO(dados), filename=a.filename))
+                    except Exception:
+                        continue
+
+            # Tenta deletar mensagens do usuário e a de confirmação
+            try:
+                await msg_inicial.delete()
+                await reply.delete()
+            except Exception:
+                pass
+
+            try:
+                await interaction.channel.send(content=self.conteudo.value, files=files)
+                # Envia o log original que você tinha configurado
+                await enviar_log(interaction.guild, "mensagem", "📢 MENSAGEM ENVIADA", f"\nStaff:\n{interaction.user.mention}\n\nCanal:\n{interaction.channel.mention}\n\nMensagem:\n\n{self.conteudo.value}\n", discord.Color.blue())
+            except Exception:
+                await interaction.followup.send("❌ Não consegui reenviar a mensagem final (permissão).", ephemeral=True)
+
+        except asyncio.TimeoutError:
+            # Tempo esgotado
+            try:
+                await interaction.followup.send("⏰ Tempo esgotado. Nenhum anexo recebido.", ephemeral=True)
+            except Exception:
+                pass
 
 @bot.tree.command(name="mensagem", description="Enviar mensagem como bot")
 async def mensagem(interaction: discord.Interaction):
@@ -397,3 +454,4 @@ async def mensagem(interaction: discord.Interaction):
     await interaction.response.send_modal(MensagemModal())
 
 bot.run(TOKEN)
+
