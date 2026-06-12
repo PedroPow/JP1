@@ -4,6 +4,10 @@ from discord.ext import commands
 import os  # <-- CERTIFIQUE-SE DE QUE ESTA LINHA ESTÁ AQUI
 import re
 from dotenv import load_dotenv
+import asyncio
+import io
+import aiohttp
+from discord.ui import Modal, TextInput
 
 load_dotenv()
 
@@ -73,9 +77,15 @@ CARGO_ANALISE_ID = 1502777759863144523
 LOGS = {
     "cadastro": 1514848008745914438,
     "aceite": 1514848072943931414,
-    "recusa": 1514848137464909874,
+    "recusa": 1502777767610155128,
     "promocao": 1514848245707440350,
-    "comandos": 1514848289646710814
+    "comandos": 1502777767610155131,
+
+    # NOVOS LOGS STAFF
+    "clearall": 1502777767610155131,
+    "mensagem": 1502777767610155131,
+    "adv": 1514856053987213443,
+    "ban": 1514856110740213921
 }
 
 # RegExp para validar as plataformas permitidas
@@ -452,36 +462,43 @@ class SelectNiveis(ui.Select):
                     await enviar_log(
                         guild,
                         "aceite",
-                        "Novo Criador Aceito",
+                        "✅ NOVO CRIADOR ACEITO",
                         f"""
-                Staff:
+                👮 Staff:
                 {interaction.user.mention}
 
-                Criador:
+                🎥 Criador:
                 {membro.mention}
 
-                Nível:
-                `{EMOJIS[nivel]}` **`{nivel.upper()}`**
+                🏷️ Nível:
+                {EMOJIS[nivel]} **{nivel.upper()}**
+
+                📅 Data:
+                <t:{int(discord.utils.utcnow().timestamp())}:F>
                 """
                     )
 
-                else:
+
+                elif self.acao == "promover":
 
                     await enviar_log(
                         guild,
                         "promocao",
-                        "Nível Criador Alterado",
+                        "📈 CRIADOR PROMOVIDO / REBAIXADO",
                         f"""
-                Staff:
+                👮 Staff:
                 {interaction.user.mention}
 
-                Criador:
+                🎥 Criador:
                 {membro.mention}
 
-                Novo nível:
-                `{EMOJIS[nivel]}` **`{nivel.upper()}`**"
+                🏷️ Novo nível:
+                {EMOJIS[nivel]} **{nivel.upper()}**
+
+                Canal:
+                {interaction.channel.mention}
                 """
-                    )                    
+                    )                  
 
 
 # Select Menu Principal (Aceitar, Recusar, Promover)
@@ -567,18 +584,21 @@ class SelectAcoes(ui.Select):
                         await enviar_log(
                             guild,
                             "recusa",
-                            "Criador Recusado",
+                            "❌ NOVO CRIADOR RECUSADO",
                             f"""
-                        Staff:
+                        👮 Staff:
                         {interaction.user.mention}
 
-                        Ticket:
+                        🎥 Criador:
+                        {membro.mention if membro else "Não encontrado"}
+
+                        🎫 Ticket:
                         {interaction.channel.mention}
 
                         Motivo:
                         Solicitação recusada
                         """
-                        )                                 
+                        )                               
 
                         # Prossegue com a exclusão do ticket normalmente
                         await interaction.message.delete()
@@ -660,6 +680,199 @@ async def JP1(ctx):  # <--- Corrigido aqui!
     {ctx.channel.mention}
     """
     )
+
+
+# ============================
+#        /clearall
+# ============================
+
+@bot.tree.command(name="clearall", description="Apaga mensagens do canal.")
+async def clearall(interaction: discord.Interaction):
+
+    if not interaction.user.guild_permissions.manage_messages:
+        return await interaction.response.send_message(
+            "❌ Sem permissão.",
+            ephemeral=True
+        )
+
+    canal = interaction.channel
+
+    await interaction.response.send_message(
+        "🧹 Limpando canal...",
+        ephemeral=True
+    )
+
+    mensagens = await canal.purge()
+
+    await enviar_log(
+        interaction.guild,
+        "clearall",
+        "🧹 CLEARALL USADO",
+        f"""
+Usuário:
+{interaction.user.mention}
+
+ID:
+`{interaction.user.id}`
+
+Canal:
+{canal.mention}
+
+Mensagens apagadas:
+`{len(mensagens)}`
+""",
+        discord.Color.orange()
+    )
+
+
+
+# ============================
+#        /adv
+# ============================
+
+@bot.tree.command(name="adv", description="Aplicar advertência")
+async def adv(
+    interaction: discord.Interaction,
+    membro: discord.Member,
+    motivo: str
+):
+
+    if not interaction.user.guild_permissions.kick_members:
+        return await interaction.response.send_message(
+            "❌ Sem permissão.",
+            ephemeral=True
+        )
+
+
+    await interaction.response.send_message(
+        "⚠️ Advertência aplicada!",
+        ephemeral=True
+    )
+
+
+    await enviar_log(
+        interaction.guild,
+        "adv",
+        "⚠️ ADV APLICADA",
+        f"""
+Staff:
+{interaction.user.mention}
+
+Membro:
+{membro.mention}
+
+ID:
+`{membro.id}`
+
+Motivo:
+{motivo}
+""",
+        discord.Color.yellow()
+    )
+
+
+
+# ============================
+#          /ban
+# ============================
+
+@bot.tree.command(name="ban", description="Banir membro")
+async def ban(
+    interaction: discord.Interaction,
+    membro: discord.Member,
+    motivo:str
+):
+
+    if not interaction.user.guild_permissions.ban_members:
+        return await interaction.response.send_message(
+            "❌ Sem permissão.",
+            ephemeral=True
+        )
+
+
+    await membro.ban(reason=motivo)
+
+
+    await interaction.response.send_message(
+        f"⛔ {membro.mention} banido!",
+        ephemeral=True
+    )
+
+
+    await enviar_log(
+        interaction.guild,
+        "ban",
+        "⛔ MEMBRO BANIDO",
+        f"""
+Staff:
+{interaction.user.mention}
+
+Banido:
+{membro.mention}
+
+ID:
+`{membro.id}`
+
+Motivo:
+{motivo}
+""",
+        discord.Color.red()
+    )
+
+
+class MensagemModal(Modal, title="Enviar Mensagem"):
+
+    texto = TextInput(
+        label="Mensagem",
+        style=discord.TextStyle.paragraph,
+        max_length=2000
+    )
+
+
+    async def on_submit(self, interaction: discord.Interaction):
+
+        await interaction.channel.send(
+            self.texto.value
+        )
+
+
+        await interaction.response.send_message(
+            "✅ Mensagem enviada!",
+            ephemeral=True
+        )
+
+
+        await enviar_log(
+            interaction.guild,
+            "mensagem",
+            "📢 MENSAGEM ENVIADA",
+            f"""
+Staff:
+{interaction.user.mention}
+
+Canal:
+{interaction.channel.mention}
+
+Mensagem:
+
+{self.texto.value}
+""",
+            discord.Color.blue()
+        )
+
+
+
+@bot.tree.command(name="mensagem", description="Enviar mensagem como bot")
+async def mensagem(interaction: discord.Interaction):
+
+    if not interaction.user.guild_permissions.administrator:
+        return await interaction.response.send_message(
+            "❌ Sem permissão.",
+            ephemeral=True
+        )
+
+
+    await interaction.response.send_modal(MensagemModal())    
 
 # Insira o Token do seu Bot do Discord abaixo
 bot.run(TOKEN)
