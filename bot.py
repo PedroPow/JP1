@@ -69,8 +69,44 @@ CATEGORIA_TICKET_INICIAL = 1502777767610155133
 CARGO_VISITANTE_ID = 1502777767610155126
 CARGO_ANALISE_ID = 1502777759863144523
 
+# CANAIS DE LOG
+LOGS = {
+    "cadastro": 1514848008745914438,
+    "aceite": 1514848072943931414,
+    "recusa": 1514848137464909874,
+    "promocao": 1514848245707440350,
+    "comandos": 1514848289646710814
+}
+
 # RegExp para validar as plataformas permitidas
 RE_PLATAFORMAS = re.compile(r'(tiktok\.com|instagram\.com|youtube\.com|youtu\.be|kick\.com|facebook\.com|kwai)', re.IGNORECASE)
+
+async def enviar_log(guild, tipo, titulo, descricao, cor=discord.Color.red()):
+
+    canal_id = LOGS.get(tipo)
+
+    if not canal_id:
+        print(f"Tipo de log inválido: {tipo}")
+        return
+
+    canal = guild.get_channel(canal_id)
+
+    if not canal:
+        print(f"Canal de log {tipo} não encontrado")
+        return
+
+    embed = discord.Embed(
+        title=titulo,
+        description=descricao,
+        color=cor,
+        timestamp=discord.utils.utcnow()
+    )
+
+    embed.set_footer(
+        text="Jardim Peri RP • Sistema de Logs"
+    )
+
+    await canal.send(embed=embed)
 
 # --- INTERFACES DO USUÁRIO (UI) ---
 
@@ -83,7 +119,7 @@ class FormularioSetModal(ui.Modal, title="Solicitação de Set"):
     observacao = ui.TextInput(label="Observação (Opcional)", style=discord.TextStyle.paragraph, required=False, max_length=300)
 
     # 2. Toda a lógica de processamento e validação acontece obrigatoriamente dentro do on_submit
-    async def on_submit(self, interaction: discord.Interaction):
+    async def on_submit(self, interaction: discord.Interaction):        
         
         # --- VALIDAÇÃO DO LINK (CORRIGIDO) ---
         # Pegamos o valor digitado no campo 'link_plataforma' usando '.value'
@@ -114,6 +150,28 @@ class FormularioSetModal(ui.Modal, title="Solicitação de Set"):
         # Setar permissões básicas do ticket
         await ticket_channel.set_permissions(guild.default_role, read_messages=False)
         await ticket_channel.set_permissions(interaction.user, read_messages=True, send_messages=True)
+
+        await enviar_log(
+            guild,
+            "cadastro",
+            "📩 Cadastro Aberto",
+            f"""
+        👤 Usuário:
+        {interaction.user.mention}
+
+        📝 Nome:
+        `{self.nome_usuario.value}`
+
+        🆔 ID:
+        `{self.discord_id.value}`
+
+        🔗 Plataforma:
+        {self.link_plataforma.value}
+
+        🎫 Ticket:
+        {ticket_channel.mention}
+        """
+        )        
 
         # Montar o Embed com os dados do Modal
         embed = discord.Embed(title="<:emojiJP:1505074670829961236> Contrato Recebido", color=discord.Color.red())
@@ -387,7 +445,43 @@ class SelectNiveis(ui.Select):
 
                 except discord.Forbidden:
 
-                    print(f"Não foi possível enviar DM para {membro.name} pois a DM dele está fechada.")           
+                    print(f"Não foi possível enviar DM para {membro.name} pois a DM dele está fechada.")      
+
+                if self.acao == "aceitar":
+
+                    await enviar_log(
+                        guild,
+                        "aceite",
+                        "✅ Novo Criador Aceito",
+                        f"""
+                👮 Staff:
+                {interaction.user.mention}
+
+                👤 Criador:
+                {membro.mention}
+
+                🏷️ Nível:
+                {EMOJIS[nivel]} **{nivel.upper()}**
+                """
+                    )
+
+                else:
+
+                    await enviar_log(
+                        guild,
+                        "promocao",
+                        "⬆️⬇️ Criador Alterado",
+                        f"""
+                👮 Staff:
+                {interaction.user.mention}
+
+                👤 Criador:
+                {membro.mention}
+
+                Novo nível:
+                {EMOJIS[nivel]} **{nivel.upper()}**
+                """
+                    )                    
 
 
 # Select Menu Principal (Aceitar, Recusar, Promover)
@@ -476,6 +570,22 @@ class SelectAcoes(ui.Select):
                         await asyncio.sleep(5)
                         await interaction.channel.delete()
 
+                        await enviar_log(
+                            guild,
+                            "recusa",
+                            "❌ Criador Recusado",
+                            f"""
+                        👮 Staff:
+                        {interaction.user.mention}
+
+                        🎫 Ticket:
+                        {interaction.channel.mention}
+
+                        Motivo:
+                        Solicitação recusada
+                        """
+                        )                        
+
 
 class MenuGerenciamentoTicket(ui.View):
     def __init__(self, nome_usuario=""):
@@ -531,7 +641,25 @@ async def JP1(ctx):  # <--- Corrigido aqui!
     embed.set_image(url="https://cdn.discordapp.com/attachments/1444735189765849320/1505098549610811462/Criadores_JP_2.png?ex=6a0963c1&is=6a081241&hm=90f76b910373b79f86e88661838d21101075da0480590fb1d7df5a5eaa69fdd1&")
 
     embed.set_footer(text="Jardim Peri RP - Todos os direitos reservados", icon_url="https://cdn.discordapp.com/attachments/1444735189765849320/1505074583601025114/emoji_JP.webp?ex=6a094d6f&is=6a07fbef&hm=5bd4e53ca8c4b641133b0f855affa243f440b86cdb33410d7579215042d8eba3&")
+
     await ctx.send(embed=embed, view=BotaoSolicitarSet())
+
+
+    await enviar_log(
+        ctx.guild,
+        "comandos",
+        "📌 Painel Criado",
+        f"""
+    👮 Quem usou:
+    {ctx.author.mention}
+
+    📜 Comando:
+    `!JP1`
+
+    📍 Canal:
+    {ctx.channel.mention}
+    """
+    )
 
 # Insira o Token do seu Bot do Discord abaixo
 bot.run(TOKEN)
