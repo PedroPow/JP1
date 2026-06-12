@@ -59,6 +59,13 @@ LOGS = {
     "mensagem": 1502777767610155131, "adv": 1514856053987213443, "ban": 1514856110740213921
 }
 
+ADV = {
+    "adv1": 1514862629401788557,
+    "adv2": 1514862551916351518,
+    "adv3": 1514862700658688112,
+    "banido": 1514862792468074526
+}
+
 RE_PLATAFORMAS = re.compile(r'(tiktok\.com|instagram\.com|youtube\.com|youtu\.be|kick\.com|facebook\.com|kwai)', re.IGNORECASE)
 
 async def enviar_log(guild, tipo, titulo, descricao, cor=discord.Color.red()):
@@ -368,12 +375,71 @@ async def clearall(interaction: discord.Interaction):
     mensagens = await canal.purge()
     await enviar_log(interaction.guild, "clearall", "🧹 CLEARALL USADO", f"\nUsuário:\n{interaction.user.mention}\n\nID:\n`{interaction.user.id}`\n\nCanal:\n{canal.mention}\n\nMensagens apagadas:\n`{len(mensagens)}`\n", discord.Color.orange())
 
-@bot.tree.command(name="adv", description="Aplicar advertência")
+@bot.tree.command(name="adv", description="Aplica advertência acumulativa em um membro.")
 async def adv(interaction: discord.Interaction, membro: discord.Member, motivo: str):
-    if not interaction.user.guild_permissions.kick_members:
-        return await interaction.response.send_message("❌ Sem permissão.", ephemeral=True)
-    await interaction.response.send_message("⚠️ Advertência aplicada!", ephemeral=True)
-    await enviar_log(interaction.guild, "adv", "⚠️ ADV APLICADA", f"\nStaff:\n{interaction.user.mention}\n\nMembro:\n{membro.mention}\n\nID:\n`{membro.id}`\n\nMotivo:\n{motivo}\n", discord.Color.yellow())
+    # IDs dos cargos de advertência (Substitua pelos IDs reais do seu servidor)
+    ID_CARGO_ADV1 = 1514856053987213443  # Exemplo: coloque o ID da ADV 1
+    ID_CARGO_ADV2 = 1514856053987213444  # Exemplo: coloque o ID da ADV 2
+    ID_CARGO_ADV3 = 1514856053987213445  # Exemplo: coloque o ID da ADV 3
+    ID_CARGO_BANIDO = 1514856110740213921 # Exemplo: coloque o ID do cargo Banido (ou use o ban nativo)
+
+    # Verifica se quem usou o comando tem permissão de Staff (ou Kick)
+    CARGO_STAFF_ID = 1502777759880188125
+    if not any(role.id == CARGO_STAFF_ID for role in interaction.user.roles) and not interaction.user.guild_permissions.kick_members:
+        return await interaction.response.send_message("❌ Você não tem permissão para aplicar advertências.", ephemeral=True)
+
+    guild = interaction.guild
+    adv1 = guild.get_role(ID_CARGO_ADV1)
+    adv2 = guild.get_role(ID_CARGO_ADV2)
+    adv3 = guild.get_role(ID_CARGO_ADV3)
+    banido = guild.get_role(ID_CARGO_BANIDO)
+
+    # Verifica se os cargos existem no servidor
+    if not all([adv1, adv2, adv3]):
+        return await interaction.response.send_message("❌ Erro: Um ou mais cargos de advertência não foram encontrados no servidor.", ephemeral=True)
+
+    # Lógica acumulativa de advertências
+    try:
+        if banido and banido in membro.roles:
+            return await interaction.response.send_message("⚠️ Esse membro já possui o cargo de banido.", ephemeral=True)
+
+        if adv3 in membro.roles:
+            await membro.remove_roles(adv3)
+            if banido: await membro.add_roles(banido)
+            # Opcional: Se quiser banir nativamente do Discord, descomente a linha abaixo:
+            # await membro.ban(reason=f"Acúmulo de 4 advertências. Motivo final: {motivo}")
+            msg = "🚫 **4ª advertência** → Membro punido com o cargo de Banido!"
+            cor_log = discord.Color.red()
+            
+        elif adv2 in membro.roles:
+            await membro.remove_roles(adv2)
+            await membro.add_roles(adv3)
+            msg = "⚠️ **3ª advertência** aplicada com sucesso!"
+            cor_log = discord.Color.red()
+            
+        elif adv1 in membro.roles:
+            await membro.remove_roles(adv1)
+            await membro.add_roles(adv2)
+            msg = "⚠️ **2ª advertência** aplicada com sucesso!"
+            cor_log = discord.Color.orange()
+            
+        else:
+            await membro.add_roles(adv1)
+            msg = "⚠️ **1ª advertência** aplicada com sucesso!"
+            cor_log = discord.Color.gold()
+
+        # Responde o staff que aplicou
+        await interaction.response.send_message(msg, ephemeral=True)
+
+        # Envia o log para o canal de advertências usando o padrão do seu bot
+        texto_log = f"\n👮 **Staff:**\n{interaction.user.mention}\n\n👤 **Membro:**\n{membro.mention}\n\n🆔 **ID do Membro:**\n`{membro.id}`\n\n📝 **Motivo:**\n{motivo}\n\n📊 **Ação:**\n{msg}\n"
+        await enviar_log(guild, "adv", "⚠️ ADVERTÊNCIA APLICADA", texto_log, cor_log)
+
+    except discord.Forbidden:
+        return await interaction.response.send_message("❌ O bot não tem permissão de gerenciamento de cargos para punir este membro.", ephemeral=True)
+    except Exception as e:
+        print(f"Erro no comando adv: {e}")
+        return await interaction.response.send_message("❌ Ocorreu um erro interno ao atualizar os cargos do membro.", ephemeral=True)
 
 @bot.tree.command(name="ban", description="Banir membro")
 async def ban(interaction: discord.Interaction, membro: discord.Member, motivo: str):
