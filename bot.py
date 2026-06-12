@@ -405,19 +405,19 @@ async def adv(interaction: discord.Interaction, membro: discord.Member, motivo: 
             # Opcional: Se quiser banir nativamente do Discord, descomente a linha abaixo:
             # await membro.ban(reason=f"Acúmulo de 4 advertências. Motivo final: {motivo}")
             msg = "🚫 **4ª advertência** → Membro punido com o cargo de Banido!"
-            cor_log = discord.Color.red()
+            cor_log = discord.Color.gold()
             
         elif adv2 in membro.roles:
             await membro.remove_roles(adv2)
             await membro.add_roles(adv3)
             msg = "⚠️ **3ª advertência** aplicada com sucesso!"
-            cor_log = discord.Color.red()
+            cor_log = discord.Color.gold()
             
         elif adv1 in membro.roles:
             await membro.remove_roles(adv1)
             await membro.add_roles(adv2)
             msg = "⚠️ **2ª advertência** aplicada com sucesso!"
-            cor_log = discord.Color.orange()
+            cor_log = discord.Color.gold()
             
         else:
             await membro.add_roles(adv1)
@@ -428,8 +428,12 @@ async def adv(interaction: discord.Interaction, membro: discord.Member, motivo: 
         await interaction.response.send_message(msg, ephemeral=True)
 
         # Envia o log para o canal de advertências usando o padrão do seu bot
-        texto_log = f"\n👮 **Staff:**\n{interaction.user.mention}\n\n👤 **Membro:**\n{membro.mention}\n\n🆔 **ID do Membro:**\n`{membro.id}`\n\n📝 **Motivo:**\n{motivo}\n\n📊 **Ação:**\n{msg}\n"
+        texto_log = f"\n**Staff:**\n{interaction.user.mention}\n\n**Membro:**\n{membro.mention}\n\n**Motivo:**\n{motivo}\n"
         await enviar_log(guild, "adv", "⚠️ ADVERTÊNCIA APLICADA", texto_log, cor_log)
+        
+        embed.set_thumbnail(url="https://cdn.discordapp.com/attachments/1444735189765849320/1503019230910746654/GIF_PERI.gif?ex=6a2cabfd&is=6a2b5a7d&hm=26b0b31da9f62058bff411960ccdf2cacf12e6e7eef65b71b74e27d6a1badc9c&")
+
+        embed.set_image(url="https://cdn.discordapp.com/attachments/1444735189765849320/1505098549610811462/Criadores_JP_2.png?ex=6a2c5381&is=6a2b0201&hm=8fc88a4ad3aa3e328d3e8ebee0bd2274ae1920dd8608a440e4c71792e50a34f5&")
 
     except discord.Forbidden:
         return await interaction.response.send_message("❌ O bot não tem permissão de gerenciamento de cargos para punir este membro.", ephemeral=True)
