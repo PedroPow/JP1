@@ -154,18 +154,18 @@ class FormularioSetModal(ui.Modal, title="Solicitação de Set"):
         await enviar_log(
             guild,
             "cadastro",
-            "📩 Cadastro Aberto",
+            "Novo Cadastro Aberto",
             f"""
-        👤 Usuário:
+        Usuário:
         {interaction.user.mention}
 
-        📝 Nome:
+        Nome:
         `{self.nome_usuario.value}`
 
-        🆔 ID:
+        ID:
         `{self.discord_id.value}`
 
-        🔗 Plataforma:
+        Plataforma:
         {self.link_plataforma.value}
 
         🎫 Ticket:
@@ -452,16 +452,16 @@ class SelectNiveis(ui.Select):
                     await enviar_log(
                         guild,
                         "aceite",
-                        "✅ Novo Criador Aceito",
+                        "Novo Criador Aceito",
                         f"""
-                👮 Staff:
+                Staff:
                 {interaction.user.mention}
 
-                👤 Criador:
+                Criador:
                 {membro.mention}
 
-                🏷️ Nível:
-                {EMOJIS[nivel]} **{nivel.upper()}**
+                Nível:
+                `{EMOJIS[nivel]}` **`{nivel.upper()}`**
                 """
                     )
 
@@ -470,16 +470,16 @@ class SelectNiveis(ui.Select):
                     await enviar_log(
                         guild,
                         "promocao",
-                        "⬆️⬇️ Criador Alterado",
+                        "Nível Criador Alterado",
                         f"""
-                👮 Staff:
+                Staff:
                 {interaction.user.mention}
 
-                👤 Criador:
+                Criador:
                 {membro.mention}
 
                 Novo nível:
-                {EMOJIS[nivel]} **{nivel.upper()}**
+                `{EMOJIS[nivel]}` **`{nivel.upper()}`**"
                 """
                     )                    
 
@@ -564,27 +564,27 @@ class SelectAcoes(ui.Select):
                             except Exception:
                                 print("Não foi possível notificar o usuário da recusa via DM.")
 
-                        # Prossegue com a exclusão do ticket normalmente
-                        await interaction.message.delete()
-                        import asyncio
-                        await asyncio.sleep(5)
-                        await interaction.channel.delete()
-
                         await enviar_log(
                             guild,
                             "recusa",
-                            "❌ Criador Recusado",
+                            "Criador Recusado",
                             f"""
-                        👮 Staff:
+                        Staff:
                         {interaction.user.mention}
 
-                        🎫 Ticket:
+                        Ticket:
                         {interaction.channel.mention}
 
                         Motivo:
                         Solicitação recusada
                         """
-                        )                        
+                        )                                 
+
+                        # Prossegue com a exclusão do ticket normalmente
+                        await interaction.message.delete()
+                        import asyncio
+                        await asyncio.sleep(5)
+                        await interaction.channel.delete()                       
 
 
 class MenuGerenciamentoTicket(ui.View):
@@ -648,15 +648,15 @@ async def JP1(ctx):  # <--- Corrigido aqui!
     await enviar_log(
         ctx.guild,
         "comandos",
-        "📌 Painel Criado",
+        "Painel Criado",
         f"""
-    👮 Quem usou:
+    Quem usou:
     {ctx.author.mention}
 
-    📜 Comando:
+    Comando:
     `!JP1`
 
-    📍 Canal:
+    Canal:
     {ctx.channel.mention}
     """
     )
