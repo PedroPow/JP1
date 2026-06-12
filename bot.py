@@ -66,6 +66,8 @@ ADV = {
     "banido": 1514862792468074526
 }
 
+CARGO_STAFF_ID = 1502777759880188125
+
 RE_PLATAFORMAS = re.compile(r'(tiktok\.com|instagram\.com|youtube\.com|youtu\.be|kick\.com|facebook\.com|kwai)', re.IGNORECASE)
 
 async def enviar_log(guild, tipo, titulo, descricao, cor=discord.Color.red()):
@@ -377,14 +379,7 @@ async def clearall(interaction: discord.Interaction):
 
 @bot.tree.command(name="adv", description="Aplica advertência acumulativa em um membro.")
 async def adv(interaction: discord.Interaction, membro: discord.Member, motivo: str):
-    # IDs dos cargos de advertência (Substitua pelos IDs reais do seu servidor)
-    ID_CARGO_ADV1 = 1514856053987213443  # Exemplo: coloque o ID da ADV 1
-    ID_CARGO_ADV2 = 1514856053987213444  # Exemplo: coloque o ID da ADV 2
-    ID_CARGO_ADV3 = 1514856053987213445  # Exemplo: coloque o ID da ADV 3
-    ID_CARGO_BANIDO = 1514856110740213921 # Exemplo: coloque o ID do cargo Banido (ou use o ban nativo)
-
     # Verifica se quem usou o comando tem permissão de Staff (ou Kick)
-    CARGO_STAFF_ID = 1502777759880188125
     if not any(role.id == CARGO_STAFF_ID for role in interaction.user.roles) and not interaction.user.guild_permissions.kick_members:
         return await interaction.response.send_message("❌ Você não tem permissão para aplicar advertências.", ephemeral=True)
 
