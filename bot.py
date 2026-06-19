@@ -52,6 +52,8 @@ CARGOS = {
 CATEGORIA_TICKET_INICIAL = 1502777767610155133 
 CARGO_VISITANTE_ID = 1502777767610155126
 CARGO_ANALISE_ID = 1502777759863144523
+CARGO_CRIADOR_ID = 1502777759863144526
+
 
 LOGS = {
     "cadastro": 1514848008745914438, "aceite": 1514848072943931414, "recusa": 1502777767610155128,
@@ -282,43 +284,157 @@ class SelectAcoes(ui.Select):
             await interaction.response.edit_message(content=f"Selecione o nível para o qual deseja {acao}:", view=view_niveis)
             
         elif acao == "recusar":
-            # --- SEU EMBED DE RECUSADO RESTAURADO ---
+
             embed_recusado = discord.Embed(
                 title="❌ Solicitação Recusada",
                 description="Este ticket foi fechado pela administração e o canal será deletado em **5 segundos**.",
                 color=discord.Color.red()
             )
+
             await interaction.response.send_message(embed=embed_recusado)
-            
+
+            # Pega o membro pelo embed do ticket
             embed_ticket = interaction.message.embeds[0]
             match_recusa = re.search(r"<@!?(\d+)>", embed_ticket.description)
-            
-            membro = None
+
             if match_recusa:
+
                 membro_id = int(match_recusa.group(1))
+
                 try:
                     membro = guild.get_member(membro_id) or await guild.fetch_member(membro_id)
-                    if membro:
-                        # --- SEU EMBED DE RECUSA NA DM RESTAURADO ---
+                except:
+                    membro = None
+
+
+                if membro:
+
+                    # ==============================
+                    # REMOVER CARGOS DE NIVEL
+                    # ==============================
+
+                    cargos_remover = []
+
+                    for nivel, ids in CARGOS.items():
+                        for cargo_id in ids:
+
+                            cargo = guild.get_role(cargo_id)
+
+                            if cargo and cargo in membro.roles:
+                                cargos_remover.append(cargo)
+
+
+                    # Remove cargo de criador/staff streamer
+                    cargo_criador = guild.get_role(CARGO_ANALISE_ID)
+
+                    if cargo_criador and cargo_criador in membro.roles:
+                        cargos_remover.append(cargo_criador)
+
+
+                    if cargos_remover:
+                        try:
+                            await membro.remove_roles(*cargos_remover)
+                            print(
+                                f"Cargos removidos de {membro.name}"
+                            )
+
+                        except discord.Forbidden:
+                            print(
+                                "Sem permissão para remover cargos."
+                            )
+
+
+                    # ==============================
+                    # RESTAURA CARGO CRIADOR
+                    # ==============================
+
+                    cargo_criador = guild.get_role(CARGO_CRIADOR_ID)
+
+                    if cargo_criador:
+
+                        try:
+                            await membro.add_roles(cargo_criador)
+
+                        except discord.Forbidden:
+                            pass
+
+
+                    # ==============================
+                    # RESETAR NICK
+                    # ==============================
+
+                    try:
+
+                        await membro.edit(
+                            nick=None
+                        )
+
+                        print(
+                            f"Nick resetado: {membro.name}"
+                        )
+
+                    except discord.Forbidden:
+
+                        print(
+                            "Sem permissão para alterar nick."
+                        )
+
+
+
+                    # ==============================
+                    # DM DE RECUSA
+                    # ==============================
+
+                    try:
+
                         embed_dm_recusa = discord.Embed(
-                            title="❌ Atualização no seu Set de Streamer",
-                            description=f"Olá {membro.mention},\n\nSua solicitação de Set de Streamer foi avaliada pela nossa equipe e **não foi aprovada** no momento.",
+                            title="❌ Set de Streamer Recusado",
+                            description=(
+                                f"Olá {membro.mention},\n\n"
+                                "Sua solicitação de Set de Streamer "
+                                "foi recusada pela administração."
+                            ),
                             color=discord.Color.red()
                         )
-                        embed_dm_recusa.add_field(
-                            name="❓ O que fazer?", 
-                            value="Caso tenha dúvidas sobre os requisitos necessários ou queira tentar novamente no futuro, procure a nossa administração.", 
-                            inline=False
-                        )
-                        embed_dm_recusa.set_footer(text="Agradecemos o seu interesse!")
-                        await membro.send(embed=embed_dm_recusa)
-                except Exception: print("Não foi possível notificar o usuário da recusa via DM.")
 
-            await enviar_log(guild, "recusa", "❌ NOVO CRIADOR RECUSADO", 
-                f"\n👮 Staff:\n{interaction.user.mention}\n\n🎥 Criador:\n{membro.mention if membro else 'Não encontrado'}\n\n🎫 Ticket:\n{interaction.channel.mention}\n\nMotivo:\nSolicitação recusada\n")
-            
+                        await membro.send(
+                            embed=embed_dm_recusa
+                        )
+
+                    except:
+                        pass
+
+
+
+            # ==============================
+            # LOG
+            # ==============================
+
+            await enviar_log(
+                guild,
+                "recusa",
+                "❌ Criador Recusado",
+                f"""
+        Staff:
+        {interaction.user.mention}
+
+        Usuário:
+        {membro.mention if match_recusa else 'Não encontrado'}
+
+        Ações realizadas:
+
+        ❌ Cargos de nível removidos
+        ❌ Cargo criador removido
+        🔄 Nick restaurado
+        👤 Cargo visitante aplicado
+        """
+            )
+
+
             await interaction.message.delete()
+
             await asyncio.sleep(5)
+
             await interaction.channel.delete()
 
 class MenuGerenciamentoTicket(ui.View):
@@ -430,10 +546,6 @@ async def adv(interaction: discord.Interaction, membro: discord.Member, motivo: 
         # Envia o log para o canal de advertências usando o padrão do seu bot
         texto_log = f"\n**Staff:**\n{interaction.user.mention}\n\n**Membro:**\n{membro.mention}\n\n**Motivo:**\n{motivo}\n"
         await enviar_log(guild, "adv", "⚠️ ADVERTÊNCIA APLICADA", texto_log, cor_log)
-        
-        embed.set_thumbnail(url="https://cdn.discordapp.com/attachments/1444735189765849320/1503019230910746654/GIF_PERI.gif?ex=6a2cabfd&is=6a2b5a7d&hm=26b0b31da9f62058bff411960ccdf2cacf12e6e7eef65b71b74e27d6a1badc9c&")
-
-        embed.set_image(url="https://cdn.discordapp.com/attachments/1444735189765849320/1505098549610811462/Criadores_JP_2.png?ex=6a2c5381&is=6a2b0201&hm=8fc88a4ad3aa3e328d3e8ebee0bd2274ae1920dd8608a440e4c71792e50a34f5&")
 
     except discord.Forbidden:
         return await interaction.response.send_message("❌ O bot não tem permissão de gerenciamento de cargos para punir este membro.", ephemeral=True)
