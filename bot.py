@@ -349,15 +349,15 @@ class SelectAcoes(ui.Select):
 
 
                     # ==============================
-                    # RESTAURA CARGO CRIADOR
+                    # RESTAURA CARGO VISITANTE
                     # ==============================
 
-                    cargo_criador = guild.get_role(CARGO_CRIADOR_ID)
+                    cargo_visitante = guild.get_role(CARGO_VISITANTE_ID)
 
-                    if cargo_criador:
+                    if cargo_visitante:
 
                         try:
-                            await membro.add_roles(cargo_criador)
+                            await membro.add_roles(cargo_visitante)
 
                         except discord.Forbidden:
                             pass
