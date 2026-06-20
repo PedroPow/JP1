@@ -323,9 +323,13 @@ class SelectAcoes(ui.Select):
                             if cargo and cargo in membro.roles:
                                 cargos_remover.append(cargo)
 
+                    # ==============================
+                    # REMOVER CARGO DE CRIADOR
+                    # ==============================
 
-                    # Remove cargo de criador/staff streamer
-                    cargo_criador = guild.get_role(CARGO_ANALISE_ID)
+                    CARGO_CRIADOR_ID = 1502777759863144526
+
+                    cargo_criador = guild.get_role(CARGO_CRIADOR_ID)
 
                     if cargo_criador and cargo_criador in membro.roles:
                         cargos_remover.append(cargo_criador)
