@@ -259,10 +259,9 @@ class SelectAcoes(ui.Select):
         ]
         super().__init__(placeholder="⚙️・Painel Administrativo", min_values=1, max_values=1, options=options, custom_id="select_acoes_ticket")
 
-    async def callback(self, interaction: discord.Interaction):
+async def callback(self, interaction: discord.Interaction):
         CARGO_STAFF_ID = 1502777759880188125
         if not any(role.id == CARGO_STAFF_ID for role in interaction.user.roles):
-            # --- SEU EMBED DE ACESSO NEGADO RESTAURADO ---
             embed_negado = discord.Embed(
                 title="🔒 Acesso Negado",
                 description="Apenas membros da Staff autorizados podem gerenciar este ticket.\n Cargo necessário: <@&1502777759880188125>",
@@ -284,167 +283,91 @@ class SelectAcoes(ui.Select):
             await interaction.response.edit_message(content=f"Selecione o nível para o qual deseja {acao}:", view=view_niveis)
             
         elif acao == "recusar":
-
             embed_recusado = discord.Embed(
                 title="❌ Solicitação Recusada",
                 description="Este ticket foi fechado pela administração e o canal será deletado em **5 segundos**.",
                 color=discord.Color.red()
             )
-
             await interaction.response.send_message(embed=embed_recusado)
 
-            # Pega o membro pelo embed do ticket
             embed_ticket = interaction.message.embeds[0]
             match_recusa = re.search(r"<@!?(\d+)>", embed_ticket.description)
+            membro = None
+            membro_saiu = False
 
             if match_recusa:
-
                 membro_id = int(match_recusa.group(1))
-
                 try:
+                    # Tenta buscar o membro no servidor
                     membro = guild.get_member(membro_id) or await guild.fetch_member(membro_id)
-                except:
-                    membro = None
+                except discord.NotFound:
+                    # Captura o erro caso o membro não esteja no servidor
+                    membro_saiu = True
+                except Exception:
+                    membro_saiu = True
 
-
-                if membro:
-
-                    # ==============================
-                    # REMOVER CARGOS DE NIVEL
-                    # ==============================
-
+                # Se o membro ainda estiver no servidor, executa a rotina de cargos/DM normalmente
+                if membro and not membro_saiu:
                     cargos_remover = []
-
                     for nivel, ids in CARGOS.items():
                         for cargo_id in ids:
-
                             cargo = guild.get_role(cargo_id)
-
                             if cargo and cargo in membro.roles:
                                 cargos_remover.append(cargo)
 
-                    # ==============================
-                    # REMOVER CARGO DE CRIADOR
-                    # ==============================
-
-                    CARGO_CRIADOR_ID = 1502777759863144526
-
+                    CARGO_CRIADOR_ID = 1502777759683144526
                     cargo_criador = guild.get_role(CARGO_CRIADOR_ID)
-
                     if cargo_criador and cargo_criador in membro.roles:
                         cargos_remover.append(cargo_criador)
-
 
                     if cargos_remover:
                         try:
                             await membro.remove_roles(*cargos_remover)
-                            print(
-                                f"Cargos removidos de {membro.name}"
-                            )
-
                         except discord.Forbidden:
-                            print(
-                                "Sem permissão para remover cargos."
-                            )
-
-
-                    # ==============================
-                    # RESTAURA CARGO VISITANTE
-                    # ==============================
+                            print("Sem permissão para remover cargos.")
 
                     cargo_visitante = guild.get_role(CARGO_VISITANTE_ID)
-
                     if cargo_visitante:
-
-                        try:
-                            await membro.add_roles(cargo_visitante)
-
-                        except discord.Forbidden:
-                            pass
-
-
-                    # ==============================
-                    # RESETAR NICK
-                    # ==============================
+                        try: await membro.add_roles(cargo_visitante)
+                        except discord.Forbidden: pass
 
                     try:
-
-                        await membro.edit(
-                            nick=None
-                        )
-
-                        print(
-                            f"Nick resetado: {membro.name}"
-                        )
-
+                        await membro.edit(nick=None)
                     except discord.Forbidden:
-
-                        print(
-                            "Sem permissão para alterar nick."
-                        )
-
-
-
-                    # ==============================
-                    # DM DE RECUSA
-                    # ==============================
+                        print("Sem permissão para alterar nick.")
 
                     try:
-
                         embed_dm_recusa = discord.Embed(
                             title="❌ Set de Streamer Recusado",
-                            description=(
-                                f"Olá {membro.mention},\n\n"
-                                "Sua solicitação de Set de Streamer "
-                                "foi recusada pela administração."
-                            ),
+                            description=f"Olá {membro.mention},\n\nSua solicitação de Set de Streamer foi recusada pela administração.",
                             color=discord.Color.red()
                         )
-
-                        await membro.send(
-                            embed=embed_dm_recusa
-                        )
-
-                    except:
+                        await membro.send(embed=embed_dm_recusa)
+                    except Exception:
                         pass
 
+            # Envio de logs customizado com base na presença do usuário
+            if membro_saiu:
+                await enviar_log(
+                    guild,
+                    "recusa",
+                    "❌ Ticket Fechado (Membro Saiu)",
+                    f"Staff:\n{interaction.user.mention}\n\nNota:\n`O usuário não se encontra mais no servidor. O canal foi limpo e os procedimentos de cargos foram pulados.`"
+                )
+            else:
+                await enviar_log(
+                    guild,
+                    "recusa",
+                    "❌ Criador Recusado",
+                    f"Staff:\n{interaction.user.mention}\n\nUsuário:\n{membro.mention if membro else 'Não encontrado'}\n\nAções realizadas:\n\n❌ Cargos de nível removidos\n❌ Cargo criador removido\n🔄 Nick restaurado\n👤 Cargo visitante aplicado"
+                )
 
-
-            # ==============================
-            # LOG
-            # ==============================
-
-            await enviar_log(
-                guild,
-                "recusa",
-                "❌ Criador Recusado",
-                f"""
-        Staff:
-        {interaction.user.mention}
-
-        Usuário:
-        {membro.mention if match_recusa else 'Não encontrado'}
-
-        Ações realizadas:
-
-        ❌ Cargos de nível removidos
-        ❌ Cargo criador removido
-        🔄 Nick restaurado
-        👤 Cargo visitante aplicado
-        """
-            )
-
-
-            await interaction.message.delete()
-
+            # Aguarda os 5 segundos e apaga o canal de qualquer forma
             await asyncio.sleep(5)
-
-            await interaction.channel.delete()
-
-class MenuGerenciamentoTicket(ui.View):
-    def __init__(self, nome_usuario=""):
-        super().__init__(timeout=None)
-        self.add_item(SelectAcoes(nome_usuario))
+            try:
+                await interaction.channel.delete()
+            except Exception as e:
+                print(f"Erro ao deletar canal: {e}")
 
 # --- COMANDOS E EVENTOS DE INICIALIZAÇÃO (CORRIGIDOS) ---
 
