@@ -54,36 +54,38 @@ CARGO_VISITANTE_ID = 1502777759863144520
 CARGO_ANALISE_ID = 1502777759863144523
 CARGO_CRIADOR_ID = 1502777759863144526
 
-
 LOGS = {
     "cadastro": 1514848008745914438, "aceite": 1514848072943931414, "recusa": 1502777767610155128,
     "promocao": 1514848245707440350, "comandos": 1502777767610155131, "clearall": 1502777767610155131,
     "mensagem": 1502777767610155131, "adv": 1514856053987213443, "ban": 1514856110740213921
 }
 
+ID_CARGO_ADV1 = 1514862629401788557  
+ID_CARGO_ADV2 = 1514862551916351518  
+ID_CARGO_ADV3 = 1514862700658688112  
+ID_CARGO_BANIDO = 1514862792468074526 
 
-# IDs dos cargos de advertência (Substitua pelos IDs reais do seu servidor)
-ID_CARGO_ADV1 = 1514862629401788557  # Exemplo: coloque o ID da ADV 1
-ID_CARGO_ADV2 = 1514862551916351518  # Exemplo: coloque o ID da ADV 2
-ID_CARGO_ADV3 = 1514862700658688112  # Exemplo: coloque o ID da ADV 3
-ID_CARGO_BANIDO = 1514862792468074526 # Exemplo: coloque o ID do cargo Banido (ou use o ban nativo)
-
-# Verifica se quem usou o comando tem permissão de Staff (ou Kick)
 CARGO_STAFF_ID = 1502777759880188125
 
 RE_PLATAFORMAS = re.compile(r'(tiktok\.com|instagram\.com|youtube\.com|youtu\.be|kick\.com|facebook\.com|kwai)', re.IGNORECASE)
 
-async def enviar_log(guild, tipo, titulo, descricao, cor=discord.Color.red()):
+async def enviar_log(guild, tipo, titulo, description, cor=discord.Color.red()):
     canal_id = LOGS.get(tipo)
     if not canal_id: return
     canal = guild.get_channel(canal_id)
     if not canal: return
 
-    embed = discord.Embed(title=titulo, description=descricao, color=cor, timestamp=discord.utils.utcnow())
+    embed = discord.Embed(title=titulo, description=description, color=cor, timestamp=discord.utils.utcnow())
     embed.set_footer(text="Jardim Peri RP • Sistema de Logs")
     await canal.send(embed=embed)
 
 # --- INTERFACES DO USUÁRIO (UI) ---
+
+# CLASSE QUE ESTAVA FALTANDO DECLARAR:
+class MenuGerenciamentoTicket(ui.View):
+    def __init__(self, nome_usuario=""):
+        super().__init__(timeout=None)
+        self.add_item(SelectAcoes(nome_usuario))
 
 class FormularioSetModal(ui.Modal, title="Solicitação de Set"):
     nome_usuario = ui.TextInput(label="Nome Completo", placeholder="Ex: pow-ehrmantraut", min_length=5, max_length=20)
@@ -123,7 +125,7 @@ class FormularioSetModal(ui.Modal, title="Solicitação de Set"):
             f"\nUsuário:\n{interaction.user.mention}\n\nNome:\n`{self.nome_usuario.value}`\n\nID:\n`{self.discord_id.value}`\n\nPlataforma:\n{self.link_plataforma.value}\n\n🎫 Ticket:\n{ticket_channel.mention}\n"
         )        
 
-        # --- SEU EMBED ORIGINAL RESTAURADO ---
+        # --- EMBED DO TICKET ---
         embed = discord.Embed(title="<:emojiJP:1505074670829961236> Contrato Recebido", color=discord.Color.red())
         embed.description = f"Membro: **{interaction.user.mention}**\n"
         embed.add_field(name="Nome Completo:", value=f"`{self.nome_usuario.value}`", inline=True)
@@ -131,13 +133,13 @@ class FormularioSetModal(ui.Modal, title="Solicitação de Set"):
         embed.add_field(name="Link da Plataforma:", value=f"{self.link_plataforma.value}", inline=False)
         embed.add_field(name="Observação:", value=f"`{self.observacao.value}`" if self.observacao.value else "`Nenhuma observação informada.`", inline=False)
         
-        embed.set_thumbnail(url="https://cdn.discordapp.com/attachments/1444735189765849320/1503019230910746654/GIF_PERI.gif?ex=6a086abd&is=6a07193d&hm=93a51adb8b2d2e5b297285cf62c3cac8f17a1d21743f59b960909cfd5a058ae8&")
-        embed.set_image(url="https://cdn.discordapp.com/attachments/1444735189765849320/1505098549610811462/Criadores_JP_2.png?ex=6a0963c1&is=6a081241&hm=90f76b910373b79f86e88661838d21101075da0480590fb1d7df5a5eaa69fdd1&")
-        embed.set_footer(text="Jardim Peri RP - Todos os direitos reservados", icon_url="https://cdn.discordapp.com/attachments/1444735189765849320/1505074583601025114/emoji_JP.webp?ex=6a094d6f&is=6a07fbef&hm=5bd4e53ca8c4b641133b0f855affa243f440b86cdb33410d7579215042d8eba3&")
+        embed.set_thumbnail(url="https://cdn.discordapp.com/attachments/1444735189765849320/1503019230910746654/GIF_PERI.gif")
+        embed.set_image(url="https://cdn.discordapp.com/attachments/1444735189765849320/1505098549610811462/Criadores_JP_2.png")
+        embed.set_footer(text="Jardim Peri RP - Todos os direitos reservados", icon_url="https://cdn.discordapp.com/attachments/1444735189765849320/1505074583601025114/emoji_JP.webp")
 
         await ticket_channel.send(embed=embed, view=MenuGerenciamentoTicket(self.nome_usuario.value))   
         
-        # --- SEU EMBED DE SUCESSO RESTAURADO COM SEU BOTÃO ---
+        # --- EMBED DE SUCESSO ---
         embed_sucesso = discord.Embed(
             title="🎫 Ticket Criado com Sucesso!",
             description="Seu formulário foi enviado. Clique no botão abaixo para ir direto ao seu ticket de atendimento.",
@@ -227,17 +229,16 @@ class SelectNiveis(ui.Select):
 
         await mensagem.edit(content=None, embed=embed, view=MenuGerenciamentoTicket(self.nome_usuario))
 
-        # --- SEUS EMBEDS DE DM ORIGINAIS RESTAURADOS ---
         if match and membro:
             embed_dm = discord.Embed(
                 title="<:emojiJP:1505074670829961236> Atualização no seu Set de Streamer!",
-                description=f"Olá {membro.mention}, seu set no servidor foi updated com sucesso!",
+                description=f"Olá {membro.mention}, seu set no servidor foi atualizado com sucesso!",
                 color=discord.Color.red()
             )
             embed_dm.add_field(name="Novo Status:", value=f"**`{nivel.capitalize()}` `{EMOJIS[nivel]}`**.", inline=False)
             embed_dm.add_field(name="🎁 Benefícios Liberados:", value=texto_beneficios, inline=False)
-            embed_dm.set_thumbnail(url="https://cdn.discordapp.com/attachments/1444735189765849320/1503019230910746654/GIF_PERI.gif?ex=6a086abd&is=6a07193d&hm=93a51adb8b2d2e5b297285cf62c3cac8f17a1d21743f59b960909cfd5a058ae8&")
-            embed_dm.set_footer(text="Parabéns e boa sorte com o seu conteúdo!", icon_url="https://cdn.discordapp.com/attachments/1444735189765849320/1505074583601025114/emoji_JP.webp?ex=6a094d6f&is=6a07fbef&hm=5bd4e53ca8c4b641133b0f855affa243f440b86cdb33410d7579215042d8eba3&")
+            embed_dm.set_thumbnail(url="https://cdn.discordapp.com/attachments/1444735189765849320/1503019230910746654/GIF_PERI.gif")
+            embed_dm.set_footer(text="Parabéns e boa sorte com o seu conteúdo!", icon_url="https://cdn.discordapp.com/attachments/1444735189765849320/1505074583601025114/emoji_JP.webp")
             
             try: await membro.send(embed=embed_dm)
             except discord.Forbidden: print("DM Fechada.")
@@ -259,7 +260,8 @@ class SelectAcoes(ui.Select):
         ]
         super().__init__(placeholder="⚙️・Painel Administrativo", min_values=1, max_values=1, options=options, custom_id="select_acoes_ticket")
 
-async def callback(self, interaction: discord.Interaction):
+    # CORREÇÃO DE INDENTAÇÃO AQUI (A FUNÇÃO FOI ENTRADA PARA DENTRO DA CLASSE):
+    async def callback(self, interaction: discord.Interaction):
         CARGO_STAFF_ID = 1502777759880188125
         if not any(role.id == CARGO_STAFF_ID for role in interaction.user.roles):
             embed_negado = discord.Embed(
@@ -298,15 +300,12 @@ async def callback(self, interaction: discord.Interaction):
             if match_recusa:
                 membro_id = int(match_recusa.group(1))
                 try:
-                    # Tenta buscar o membro no servidor
                     membro = guild.get_member(membro_id) or await guild.fetch_member(membro_id)
                 except discord.NotFound:
-                    # Captura o erro caso o membro não esteja no servidor
                     membro_saiu = True
                 except Exception:
                     membro_saiu = True
 
-                # Se o membro ainda estiver no servidor, executa a rotina de cargos/DM normalmente
                 if membro and not membro_saiu:
                     cargos_remover = []
                     for nivel, ids in CARGOS.items():
@@ -321,20 +320,16 @@ async def callback(self, interaction: discord.Interaction):
                         cargos_remover.append(cargo_criador)
 
                     if cargos_remover:
-                        try:
-                            await membro.remove_roles(*cargos_remover)
-                        except discord.Forbidden:
-                            print("Sem permissão para remover cargos.")
+                        try: await membro.remove_roles(*cargos_remover)
+                        except discord.Forbidden: print("Sem permissão para remover cargos.")
 
                     cargo_visitante = guild.get_role(CARGO_VISITANTE_ID)
                     if cargo_visitante:
                         try: await membro.add_roles(cargo_visitante)
                         except discord.Forbidden: pass
 
-                    try:
-                        await membro.edit(nick=None)
-                    except discord.Forbidden:
-                        print("Sem permissão para alterar nick.")
+                    try: await membro.edit(nick=None)
+                    except discord.Forbidden: print("Sem permissão para alterar nick.")
 
                     try:
                         embed_dm_recusa = discord.Embed(
@@ -343,33 +338,24 @@ async def callback(self, interaction: discord.Interaction):
                             color=discord.Color.red()
                         )
                         await membro.send(embed=embed_dm_recusa)
-                    except Exception:
-                        pass
+                    except Exception: pass
 
-            # Envio de logs customizado com base na presença do usuário
             if membro_saiu:
                 await enviar_log(
-                    guild,
-                    "recusa",
-                    "❌ Ticket Fechado (Membro Saiu)",
+                    guild, "recusa", "❌ Ticket Fechado (Membro Saiu)",
                     f"Staff:\n{interaction.user.mention}\n\nNota:\n`O usuário não se encontra mais no servidor. O canal foi limpo e os procedimentos de cargos foram pulados.`"
                 )
             else:
                 await enviar_log(
-                    guild,
-                    "recusa",
-                    "❌ Criador Recusado",
+                    guild, "recusa", "❌ Criador Recusado",
                     f"Staff:\n{interaction.user.mention}\n\nUsuário:\n{membro.mention if membro else 'Não encontrado'}\n\nAções realizadas:\n\n❌ Cargos de nível removidos\n❌ Cargo criador removido\n🔄 Nick restaurado\n👤 Cargo visitante aplicado"
                 )
 
-            # Aguarda os 5 segundos e apaga o canal de qualquer forma
             await asyncio.sleep(5)
-            try:
-                await interaction.channel.delete()
-            except Exception as e:
-                print(f"Erro ao deletar canal: {e}")
+            try: await interaction.channel.delete()
+            except Exception as e: print(f"Erro ao deletar canal: {e}")
 
-# --- COMANDOS E EVENTOS DE INICIALIZAÇÃO (CORRIGIDOS) ---
+# --- COMANDOS E EVENTOS DE INICIALIZAÇÃO ---
 
 @bot.event
 async def on_ready():
@@ -399,15 +385,14 @@ async def on_member_join(member: discord.Member):
 @bot.command()
 @commands.has_permissions(administrator=True)
 async def JP1(ctx):
-    # --- SEU EMBED DO PAINEL PRINCIPAL RESTAURADO COMPLETO ---
     embed = discord.Embed(
         title="<:emojiJP:1505074670829961236> Jardim Peri - **CADASTRO DE STREAMERS**",
         description="> Seja bem-vindo ao painel de **CADASTRO DE STREAMERS**!\n\n> clique no botão abaixo e preencha o formulário com suas informações.\n\n> Nossa equipe irá analisar sua solicitação e entrar em contato o mais breve possível.\n\n> Obrigado por escolher o Jardim Peri!\n\n**Tenha em mãos as seguintes informações para agilizar sua solicitação:**\n\n🔸`Nome Completo`\n🔸`Identificação (ID)`\n🔸`Link da Plataforma`\n🔸`Observação (Opcional)`\n",
         color=discord.Color.red()
     )
-    embed.set_thumbnail(url="https://cdn.discordapp.com/attachments/1444735189765849320/1503019230910746654/GIF_PERI.gif?ex=6a086abd&is=6a07193d&hm=93a51adb8b2d2e5b297285cf62c3cac8f17a1d21743f59b960909cfd5a058ae8&")
-    embed.set_image(url="https://cdn.discordapp.com/attachments/1444735189765849320/1505098549610811462/Criadores_JP_2.png?ex=6a0963c1&is=6a081241&hm=90f76b910373b79f86e88661838d21101075da0480590fb1d7df5a5eaa69fdd1&")
-    embed.set_footer(text="Jardim Peri RP - Todos os direitos reservados", icon_url="https://cdn.discordapp.com/attachments/1444735189765849320/1505074583601025114/emoji_JP.webp?ex=6a094d6f&is=6a07fbef&hm=5bd4e53ca8c4b641133b0f855affa243f440b86cdb33410d7579215042d8eba3&")
+    embed.set_thumbnail(url="https://cdn.discordapp.com/attachments/1444735189765849320/1503019230910746654/GIF_PERI.gif")
+    embed.set_image(url="https://cdn.discordapp.com/attachments/1444735189765849320/1505098549610811462/Criadores_JP_2.png")
+    embed.set_footer(text="Jardim Peri RP - Todos os direitos reservados", icon_url="https://cdn.discordapp.com/attachments/1444735189765849320/1505074583601025114/emoji_JP.webp")
 
     await ctx.send(embed=embed, view=BotaoSolicitarSet())
     await enviar_log(ctx.guild, "comandos", "Painel Criado", f"\nQuem usou:\n{ctx.author.mention}\n\nComando:\n`!JP1`\n\nCanal:\n{ctx.channel.mention}\n")
@@ -423,7 +408,6 @@ async def clearall(interaction: discord.Interaction):
 
 @bot.tree.command(name="adv", description="Aplica advertência acumulativa em um membro.")
 async def adv(interaction: discord.Interaction, membro: discord.Member, motivo: str):
-
     if not any(role.id == CARGO_STAFF_ID for role in interaction.user.roles) and not interaction.user.guild_permissions.kick_members:
         return await interaction.response.send_message("❌ Você não tem permissão para aplicar advertências.", ephemeral=True)
 
@@ -433,11 +417,9 @@ async def adv(interaction: discord.Interaction, membro: discord.Member, motivo: 
     adv3 = guild.get_role(ID_CARGO_ADV3)
     banido = guild.get_role(ID_CARGO_BANIDO)
 
-    # Verifica se os cargos existem no servidor
     if not all([adv1, adv2, adv3]):
         return await interaction.response.send_message("❌ Erro: Um ou mais cargos de advertência não foram encontrados no servidor.", ephemeral=True)
 
-    # Lógica acumulativa de advertências
     try:
         if banido and banido in membro.roles:
             return await interaction.response.send_message("⚠️ Esse membro já possui o cargo de banido.", ephemeral=True)
@@ -445,40 +427,32 @@ async def adv(interaction: discord.Interaction, membro: discord.Member, motivo: 
         if adv3 in membro.roles:
             await membro.remove_roles(adv3)
             if banido: await membro.add_roles(banido)
-            # Opcional: Se quiser banir nativamente do Discord, descomente a linha abaixo:
-            # await membro.ban(reason=f"Acúmulo de 4 advertências. Motivo final: {motivo}")
             msg = "🚫 **4ª advertência** → Membro punido com o cargo de Banido!"
             cor_log = discord.Color.gold()
-            
         elif adv2 in membro.roles:
             await membro.remove_roles(adv2)
             await membro.add_roles(adv3)
             msg = "⚠️ **3ª advertência** aplicada com sucesso!"
             cor_log = discord.Color.gold()
-            
         elif adv1 in membro.roles:
             await membro.remove_roles(adv1)
             await membro.add_roles(adv2)
             msg = "⚠️ **2ª advertência** aplicada com sucesso!"
             cor_log = discord.Color.gold()
-            
         else:
             await membro.add_roles(adv1)
             msg = "⚠️ **1ª advertência** aplicada com sucesso!"
             cor_log = discord.Color.gold()
 
-        # Responde o staff que aplicou
         await interaction.response.send_message(msg, ephemeral=True)
-
-        # Envia o log para o canal de advertências usando o padrão do seu bot
         texto_log = f"\n**Staff:**\n{interaction.user.mention}\n\n**Membro:**\n{membro.mention}\n\n**Motivo:**\n{motivo}\n"
         await enviar_log(guild, "adv", "⚠️ ADVERTÊNCIA APLICADA", texto_log, cor_log)
 
     except discord.Forbidden:
-        return await interaction.response.send_message("❌ O bot não tem permissão de gerenciamento de cargos para punir este membro.", ephemeral=True)
+        return await interaction.response.send_message("❌ O bot não tem permissão de gerenciamento de cargos.", ephemeral=True)
     except Exception as e:
         print(f"Erro no comando adv: {e}")
-        return await interaction.response.send_message("❌ Ocorreu um erro interno ao atualizar os cargos do membro.", ephemeral=True)
+        return await interaction.response.send_message("❌ Ocorreu um erro interno.", ephemeral=True)
 
 @bot.tree.command(name="ban", description="Banir membro")
 async def ban(interaction: discord.Interaction, membro: discord.Member, motivo: str):
@@ -489,68 +463,47 @@ async def ban(interaction: discord.Interaction, membro: discord.Member, motivo: 
     await enviar_log(interaction.guild, "ban", "⛔ MEMBRO BANIDO", f"\nStaff:\n{interaction.user.mention}\n\nBanido:\n{membro.mention}\n\nID:\n`{membro.id}`\n\nMotivo:\n{motivo}\n", discord.Color.red())
 
 class MensagemModal(Modal, title="📢 Enviar Mensagem"):
-    conteudo = TextInput(
-        label="Conteúdo da mensagem", 
-        style=discord.TextStyle.paragraph, 
-        required=True, 
-        max_length=2000
-    )
+    conteudo = TextInput(label="Conteúdo da mensagem", style=discord.TextStyle.paragraph, required=True, max_length=2000)
 
     async def on_submit(self, interaction: discord.Interaction):
-        # Checar autorização (Administrador)
         if not interaction.user.guild_permissions.administrator:
-            return await interaction.response.send_message("❌ Você não tem permissão para usar este modal.", ephemeral=True)
+            return await interaction.response.send_message("❌ Você não tem permissão.", ephemeral=True)
         
         await interaction.response.send_message("⏳ Enviando...", ephemeral=True)
-        
         try:
             msg_inicial = await interaction.channel.send(self.conteudo.value)
         except Exception:
-            return await interaction.followup.send("❌ Não consegui enviar a mensagem inicial (permissão).", ephemeral=True)
+            return await interaction.followup.send("❌ Não consegui enviar a mensagem inicial.", ephemeral=True)
             
         await interaction.followup.send("📎 Responda aquela mensagem com anexos em até 5 minutos.", ephemeral=True)
 
         def check(m: discord.Message):
-            return (
-                m.reference and 
-                m.reference.message_id == msg_inicial.id and 
-                m.author == interaction.user and 
-                m.channel == interaction.channel
-            )
+            return (m.reference and m.reference.message_id == msg_inicial.id and m.author == interaction.user and m.channel == interaction.channel)
 
         try:
             reply = await bot.wait_for("message", timeout=300.0, check=check)
             files = []
-            
             async with aiohttp.ClientSession() as session:
                 for a in reply.attachments:
                     try:
                         async with session.get(a.url) as resp:
                             dados = await resp.read()
                             files.append(discord.File(io.BytesIO(dados), filename=a.filename))
-                    except Exception:
-                        continue
+                    except Exception: continue
 
-            # Tenta deletar mensagens do usuário e a de confirmação
             try:
                 await msg_inicial.delete()
                 await reply.delete()
-            except Exception:
-                pass
+            except Exception: pass
 
             try:
                 await interaction.channel.send(content=self.conteudo.value, files=files)
-                # Envia o log original que você tinha configurado
                 await enviar_log(interaction.guild, "mensagem", "📢 MENSAGEM ENVIADA", f"\nStaff:\n{interaction.user.mention}\n\nCanal:\n{interaction.channel.mention}\n\nMensagem:\n\n{self.conteudo.value}\n", discord.Color.blue())
             except Exception:
-                await interaction.followup.send("❌ Não consegui reenviar a mensagem final (permissão).", ephemeral=True)
-
+                await interaction.followup.send("❌ Erro ao reenviar mensagem.", ephemeral=True)
         except asyncio.TimeoutError:
-            # Tempo esgotado
-            try:
-                await interaction.followup.send("⏰ Tempo esgotado. Nenhum anexo recebido.", ephemeral=True)
-            except Exception:
-                pass
+            try: await interaction.followup.send("⏰ Tempo esgotado. Nenhum anexo recebido.", ephemeral=True)
+            except Exception: pass
 
 @bot.tree.command(name="mensagem", description="Enviar mensagem como bot")
 async def mensagem(interaction: discord.Interaction):
@@ -559,4 +512,3 @@ async def mensagem(interaction: discord.Interaction):
     await interaction.response.send_modal(MensagemModal())
 
 bot.run(TOKEN)
-
