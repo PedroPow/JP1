@@ -3,6 +3,7 @@ from discord import app_commands, ui
 from discord.ext import commands
 import os
 import re
+from urllib.parse import urlparse
 from dotenv import load_dotenv
 import asyncio
 import io
@@ -67,7 +68,19 @@ ID_CARGO_BANIDO = 1514862792468074526
 
 CARGO_STAFF_ID = 1502777759880188125
 
-RE_PLATAFORMAS = re.compile(r'(tiktok\.com|instagram\.com|youtube\.com|youtu\.be|kick\.com|facebook\.com|kwai\.com|twitch\.tv)', re.IGNORECASE)
+DOMINIOS_PLATAFORMAS = (
+    "tiktok.com", "instagram.com", "youtube.com", "youtu.be",
+    "kick.com", "facebook.com", "kwai.com", "twitch.tv"
+)
+
+def link_plataforma_valido(link: str) -> bool:
+    link = link.strip()
+    if not link:
+        return False
+
+    url = urlparse(link if "://" in link else f"https://{link}")
+    hostname = (url.hostname or "").lower().rstrip(".")
+    return any(hostname == dominio or hostname.endswith(f".{dominio}") for dominio in DOMINIOS_PLATAFORMAS)
 
 async def enviar_log(guild, tipo, titulo, description, cor=discord.Color.red()):
     canal_id = LOGS.get(tipo)
@@ -96,7 +109,7 @@ class FormularioSetModal(ui.Modal, title="Solicitação de Set"):
     async def on_submit(self, interaction: discord.Interaction):        
         link_digitado = self.link_plataforma.value
         
-        if not RE_PLATAFORMAS.search(link_digitado):
+        if not link_plataforma_valido(link_digitado):
             embed_erro = discord.Embed(
                 description="⚠️ Link inválido! Use apenas links de plataformas permitidas (TikTok, Instagram, YouTube, Kick, Facebook, Kwai ou Twitch).", 
                 color=0xFF0000
