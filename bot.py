@@ -332,6 +332,10 @@ class SelectAcoes(ui.Select):
                     if cargo_criador and cargo_criador in membro.roles:
                         cargos_remover.append(cargo_criador)
 
+                    cargo_analise = guild.get_role(CARGO_ANALISE_ID)
+                    if cargo_analise and cargo_analise in membro.roles:
+                        cargos_remover.append(cargo_analise)
+
                     if cargos_remover:
                         try: await membro.remove_roles(*cargos_remover)
                         except discord.Forbidden: print("Sem permissão para remover cargos.")
@@ -361,7 +365,7 @@ class SelectAcoes(ui.Select):
             else:
                 await enviar_log(
                     guild, "recusa", "❌ Criador Recusado",
-                    f"Staff:\n{interaction.user.mention}\n\nUsuário:\n{membro.mention if membro else 'Não encontrado'}\n\nAções realizadas:\n\n❌ Cargos de nível removidos\n❌ Cargo criador removido\n🔄 Nick restaurado\n👤 Cargo visitante aplicado"
+                    f"Staff:\n{interaction.user.mention}\n\nUsuário:\n{membro.mention if membro else 'Não encontrado'}\n\nAções realizadas:\n\n❌ Cargos de nível removidos\n❌ Cargo criador removido\n❌ Cargo em análise removido\n🔄 Nick restaurado\n👤 Cargo visitante aplicado"
                 )
 
             await asyncio.sleep(5)
