@@ -67,7 +67,7 @@ ID_CARGO_BANIDO = 1514862792468074526
 
 CARGO_STAFF_ID = 1502777759880188125
 
-RE_PLATAFORMAS = re.compile(r'(tiktok\.com|instagram\.com|youtube\.com|youtu\.be|kick\.com|facebook\.com|kwai)', re.IGNORECASE)
+RE_PLATAFORMAS = re.compile(r'(tiktok\.com|instagram\.com|youtube\.com|youtu\.be|kick\.com|facebook\.com|kwai\.com|twitch\.tv)', re.IGNORECASE)
 
 async def enviar_log(guild, tipo, titulo, description, cor=discord.Color.red()):
     canal_id = LOGS.get(tipo)
@@ -98,7 +98,7 @@ class FormularioSetModal(ui.Modal, title="Solicitação de Set"):
         
         if not RE_PLATAFORMAS.search(link_digitado):
             embed_erro = discord.Embed(
-                description="⚠️ Link inválido! Use apenas links de plataformas permitidas (TikTok, Instagram, YouTube, Kick, Facebook).", 
+                description="⚠️ Link inválido! Use apenas links de plataformas permitidas (TikTok, Instagram, YouTube, Kick, Facebook, Kwai ou Twitch).", 
                 color=0xFF0000
             )
             return await interaction.response.send_message(embed=embed_erro, ephemeral=True)
